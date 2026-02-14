@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人生ゲーム</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- タイトル画面 -->
+        <div id="title-screen">
+            <h1>人生ゲーム</h1>
+            <p class="subtitle">〜 The Game of Life 〜</p>
+            <div class="player-setup">
+                <h2>プレイヤー設定</h2>
+                <div class="player-count">
+                    <label>プレイヤー人数：</label>
+                    <select id="player-count">
+                        <option value="2">2人</option>
+                        <option value="3">3人</option>
+                        <option value="4">4人</option>
+                    </select>
+                </div>
+                <div id="player-names"></div>
+                <button id="start-btn" class="btn btn-primary">ゲーム開始</button>
+            </div>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div id="game-screen" class="hidden">
+            <div id="game-header">
+                <h2 id="turn-info"></h2>
+                <div id="player-stats"></div>
+            </div>
+            <div id="board-container">
+                <canvas id="board-canvas"></canvas>
+            </div>
+            <div id="game-controls">
+                <div id="event-log">
+                    <p>サイコロを回してスタート！</p>
+                </div>
+                <div id="dice-area">
+                    <div id="dice">?</div>
+                    <button id="roll-btn" class="btn btn-primary">サイコロを回す</button>
+                </div>
+            </div>
+            <!-- 選択肢モーダル -->
+            <div id="choice-modal" class="modal hidden">
+                <div class="modal-content">
+                    <h3 id="choice-title"></h3>
+                    <p id="choice-description"></p>
+                    <div id="choice-buttons"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果画面 -->
+        <div id="result-screen" class="hidden">
+            <h1>ゲーム終了！</h1>
+            <div id="rankings"></div>
+            <button id="restart-btn" class="btn btn-primary">もう一度遊ぶ</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
