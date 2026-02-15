@@ -370,13 +370,31 @@ body {
 
 /* レスポンシブ */
 @media (max-width: 768px) {
+    #app {
+        padding: 10px;
+    }
+
     #title-screen h1 {
-        font-size: 40px;
+        font-size: 36px;
+    }
+
+    .subtitle {
+        font-size: 16px;
+        margin-bottom: 24px;
+    }
+
+    .player-setup {
+        padding: 20px 16px;
     }
 
     #player-stats {
         flex-direction: column;
         align-items: center;
+    }
+
+    .player-stat {
+        min-width: 140px;
+        padding: 8px 14px;
     }
 
     #game-controls {
@@ -386,5 +404,68 @@ body {
     #event-log {
         min-width: auto;
         width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+        min-height: 60px;
+    }
+
+    #dice {
+        width: 64px;
+        height: 64px;
+        font-size: 32px;
+    }
+
+    .btn {
+        padding: 10px 24px;
+        font-size: 16px;
+    }
+
+    .btn-choice {
+        display: block;
+        width: 100%;
+        margin: 6px 0;
+        padding: 12px 16px;
+        font-size: 14px;
+        text-align: left;
+        line-height: 1.4;
+    }
+
+    .modal-content {
+        padding: 20px 16px;
+        width: 95%;
+    }
+
+    .modal-content h3 {
+        font-size: 18px;
+    }
+
+    .modal-content p {
+        font-size: 14px;
+    }
+
+    #board-container {
+        padding: 4px;
+    }
+
+    #game-header h2 {
+        font-size: 18px;
+    }
+
+    #result-screen h1 {
+        font-size: 32px;
+    }
+
+    .rank-item {
+        padding: 12px 16px;
+    }
+}
+
+@media (max-width: 400px) {
+    #title-screen h1 {
+        font-size: 28px;
+    }
+
+    .player-setup h2 {
+        font-size: 18px;
     }
 }

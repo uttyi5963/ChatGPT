@@ -120,28 +120,38 @@ function resizeCanvas() {
     if (!canvas) return;
     const container = document.getElementById('board-container');
     const w = Math.min(container.clientWidth - 20, 1100);
+    const isMobile = w < 500;
+    const tileSize = isMobile ? 38 : 55;
+    const gap = isMobile ? 6 : 10;
+    const margin = isMobile ? 28 : 50;
+    const rowGap = isMobile ? 16 : 24;
+
+    const cols = Math.floor((w - margin * 2) / (tileSize + gap));
+    const rows = Math.ceil(gameState.board.length / Math.max(cols, 1));
+    const computedH = margin * 2 + rows * (tileSize + rowGap);
+
     canvas.width = w;
-    canvas.height = 500;
+    canvas.height = Math.max(computedH, 300);
 }
 
 function getBoardPositions() {
-    const board = gameState.board;
-    const total = board.length;
     const w = canvas.width;
-    const h = canvas.height;
-    const margin = 50;
-    const tileSize = 55;
+    const isMobile = w < 500;
+    const tileSize = isMobile ? 38 : 55;
+    const gap = isMobile ? 6 : 10;
+    const margin = isMobile ? 28 : 50;
+    const rowGap = isMobile ? 16 : 24;
 
-    // 蛇行パスを作成
-    const cols = Math.floor((w - margin * 2) / (tileSize + 10));
+    const total = gameState.board.length;
+    const cols = Math.floor((w - margin * 2) / (tileSize + gap));
     const positions = [];
     let row = 0;
     let col = 0;
-    let direction = 1; // 1=right, -1=left
+    let direction = 1;
 
     for (let i = 0; i < total; i++) {
-        const x = margin + col * (tileSize + 10) + tileSize / 2;
-        const y = margin + row * (tileSize + 24) + tileSize / 2;
+        const x = margin + col * (tileSize + gap) + tileSize / 2;
+        const y = margin + row * (tileSize + rowGap) + tileSize / 2;
         positions.push({ x, y, size: tileSize });
 
         col += direction;
@@ -158,13 +168,14 @@ function drawBoard() {
     if (!ctx) return;
     resizeCanvas();
 
+    const isMobile = canvas.width < 500;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const positions = getBoardPositions();
     const board = gameState.board;
 
     // パス線を描画
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = isMobile ? 2 : 3;
     ctx.beginPath();
     for (let i = 0; i < positions.length; i++) {
         if (i === 0) ctx.moveTo(positions[i].x, positions[i].y);
@@ -173,6 +184,11 @@ function drawBoard() {
     ctx.stroke();
 
     // マスを描画
+    const numFontSize = isMobile ? 9 : 11;
+    const nameFontSize = isMobile ? 8 : 10;
+    const nameMaxLen = isMobile ? 3 : 4;
+    const cornerR = isMobile ? 5 : 8;
+
     for (let i = 0; i < board.length; i++) {
         const tile = board[i];
         const pos = positions[i];
@@ -183,38 +199,53 @@ function drawBoard() {
         ctx.fillStyle = TILE_COLORS[tile.type] || '#555';
         ctx.globalAlpha = 0.7;
         ctx.beginPath();
-        roundRect(ctx, pos.x - s / 2, pos.y - s / 2, s, s, 8);
+        roundRect(ctx, pos.x - s / 2, pos.y - s / 2, s, s, cornerR);
         ctx.fill();
         ctx.globalAlpha = 1.0;
 
         // マスの枠
         ctx.strokeStyle = TILE_COLORS[tile.type] || '#555';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = isMobile ? 1.5 : 2;
         ctx.beginPath();
-        roundRect(ctx, pos.x - s / 2, pos.y - s / 2, s, s, 8);
+        roundRect(ctx, pos.x - s / 2, pos.y - s / 2, s, s, cornerR);
         ctx.stroke();
 
         // マス番号
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 11px sans-serif';
+        ctx.font = `bold ${numFontSize}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
-        ctx.fillText(i === 0 ? 'S' : i === board.length - 1 ? 'G' : i, pos.x, pos.y - s / 2 + 4);
+        ctx.fillText(i === 0 ? 'S' : i === board.length - 1 ? 'G' : i, pos.x, pos.y - s / 2 + 3);
 
         // マス名（短縮）
-        ctx.font = '10px sans-serif';
+        ctx.font = `${nameFontSize}px sans-serif`;
         ctx.textBaseline = 'middle';
-        const shortName = tile.name.length > 4 ? tile.name.slice(0, 4) + '..' : tile.name;
-        ctx.fillText(shortName, pos.x, pos.y + 8);
+        const shortName = tile.name.length > nameMaxLen ? tile.name.slice(0, nameMaxLen) + '..' : tile.name;
+        ctx.fillText(shortName, pos.x, pos.y + (isMobile ? 5 : 8));
     }
 
     // プレイヤー駒を描画
+    const pieceR = isMobile ? 6 : 8;
     const playerPositions = {};
     gameState.players.forEach((p, pi) => {
         const tileIdx = p.position;
         if (!playerPositions[tileIdx]) playerPositions[tileIdx] = [];
         playerPositions[tileIdx].push(pi);
     });
+
+    const offsetsMobile = [
+        { dx: -7, dy: -10 },
+        { dx: 7, dy: -10 },
+        { dx: -7, dy: 2 },
+        { dx: 7, dy: 2 },
+    ];
+    const offsetsDesktop = [
+        { dx: -10, dy: -14 },
+        { dx: 10, dy: -14 },
+        { dx: -10, dy: 0 },
+        { dx: 10, dy: 0 },
+    ];
+    const offsets = isMobile ? offsetsMobile : offsetsDesktop;
 
     gameState.players.forEach((player, pi) => {
         const tileIdx = player.position;
@@ -223,26 +254,20 @@ function drawBoard() {
 
         const samePos = playerPositions[tileIdx];
         const offsetIndex = samePos.indexOf(pi);
-        const offsets = [
-            { dx: -10, dy: -14 },
-            { dx: 10, dy: -14 },
-            { dx: -10, dy: 0 },
-            { dx: 10, dy: 0 },
-        ];
         const off = offsets[offsetIndex] || { dx: 0, dy: 0 };
 
         // 駒
         ctx.fillStyle = PLAYER_COLORS[pi];
         ctx.beginPath();
-        ctx.arc(pos.x + off.dx, pos.y + off.dy, 8, 0, Math.PI * 2);
+        ctx.arc(pos.x + off.dx, pos.y + off.dy, pieceR, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = isMobile ? 1.5 : 2;
         ctx.stroke();
 
         // プレイヤー番号
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 10px sans-serif';
+        ctx.font = `bold ${isMobile ? 8 : 10}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(pi + 1, pos.x + off.dx, pos.y + off.dy);
