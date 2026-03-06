@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>採用管理システム | つくも医療グループ</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#16213e;--ink-mid:#1a2e5e;
+      --paper:#f7f5f0;--cream:#ede9e0;--white:#ffffff;
+      --red:#b01c2e;--red-soft:#f3d6da;
+      --gold:#b8912a;--gold-soft:#f5eacc;
+      --teal:#0b7285;--teal-soft:#cef0f5;
+      --green:#276749;--green-soft:#d3ede2;
+      --orange:#c75e1a;--orange-soft:#fce8d5;
+      --border:rgba(22,33,62,0.1);
+      --shadow-sm:0 2px 8px rgba(22,33,62,0.08);
+      --shadow:0 4px 20px rgba(22,33,62,0.12);
+      --shadow-lg:0 12px 48px rgba(22,33,62,0.18);
+      --radius:8px;--radius-lg:12px;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.5;}
+
+    /* HEADER */
+    .header{background:var(--ink);height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;position:sticky;top:0;z-index:100;border-bottom:3px solid var(--red);}
+    .header-logo{display:flex;align-items:center;gap:12px;color:#fff;font-family:'Noto Serif JP',serif;font-size:15px;letter-spacing:1px;}
+    .logo-badge{width:30px;height:30px;background:var(--red);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;}
+    .header-nav{display:flex;gap:2px;}
+    .nav-btn{padding:7px 16px;background:transparent;border:none;color:rgba(255,255,255,0.55);cursor:pointer;font-family:'Noto Sans JP',sans-serif;font-size:13px;border-radius:4px;transition:all .2s;letter-spacing:.3px;}
+    .nav-btn:hover{color:#fff;background:rgba(255,255,255,0.08);}
+    .nav-btn.active{color:#ffd780;background:rgba(255,255,255,0.1);}
+
+    /* LAYOUT */
+    .page{display:none;max-width:1280px;margin:0 auto;padding:36px 24px;}
+    .page.active{display:block;}
+    .page-header{margin-bottom:28px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+    .page-title-block{border-left:4px solid var(--red);padding-left:14px;}
+    .page-title{font-family:'Noto Serif JP',serif;font-size:21px;font-weight:600;}
+    .page-sub{font-size:12px;color:#888;margin-top:3px;}
+
+    /* CARDS */
+    .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:24px;margin-bottom:20px;}
+    .card-title{font-family:'Noto Serif JP',serif;font-size:15px;font-weight:600;color:var(--ink);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+    .card-title .tag{font-family:'DM Mono',monospace;font-size:10px;background:var(--ink);color:#fff;padding:2px 8px;border-radius:3px;letter-spacing:.5px;}
+
+    /* FORMS */
+    .form-row{display:grid;gap:16px;margin-bottom:16px;}
+    .form-row.col2{grid-template-columns:1fr 1fr;}
+    .form-row.col3{grid-template-columns:1fr 1fr 1fr;}
+    .form-row.col4{grid-template-columns:1fr 1fr 1fr 1fr;}
+    @media(max-width:768px){.form-row.col2,.form-row.col3,.form-row.col4{grid-template-columns:1fr;}}
+    .form-group{display:flex;flex-direction:column;gap:5px;}
+    .form-group label{font-size:11px;font-weight:500;color:#777;letter-spacing:.5px;text-transform:uppercase;}
+    .form-group input,.form-group select,.form-group textarea{border:1.5px solid var(--border);border-radius:var(--radius);padding:9px 13px;font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--ink);background:var(--white);outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft);}
+    .form-group textarea{resize:vertical;min-height:80px;}
+    .form-group .hint{font-size:11px;color:#aaa;margin-top:2px;}
+
+    /* SECTION DIVIDER */
+    .section-divider{font-size:12px;font-weight:700;letter-spacing:2px;color:var(--red);text-transform:uppercase;margin:24px 0 14px;display:flex;align-items:center;gap:12px;}
+    .section-divider::after{content:'';flex:1;height:1px;background:var(--red-soft);}
+
+    /* BUTTONS */
+    .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 22px;border-radius:var(--radius);font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .18s;white-space:nowrap;letter-spacing:.3px;}
+    .btn-primary{background:var(--ink);color:#fff;}
+    .btn-primary:hover{background:var(--ink-mid);transform:translateY(-1px);box-shadow:var(--shadow);}
+    .btn-red{background:var(--red);color:#fff;}
+    .btn-red:hover{background:#8f1624;transform:translateY(-1px);box-shadow:var(--shadow);}
+    .btn-teal{background:var(--teal);color:#fff;}
+    .btn-teal:hover{background:#095f70;transform:translateY(-1px);}
+    .btn-gold{background:var(--gold);color:#fff;}
+    .btn-gold:hover{background:#9a7820;transform:translateY(-1px);}
+    .btn-green{background:var(--green);color:#fff;}
+    .btn-green:hover{background:#1e5238;transform:translateY(-1px);}
+    .btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--ink);}
+    .btn-ghost:hover{background:var(--cream);}
+    .btn-sm{padding:7px 16px;font-size:12px;}
+    .btn-xs{padding:4px 10px;font-size:11px;}
+    .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
+
+    /* QUESTIONS */
+    .job-tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
+    .job-tab{padding:8px 20px;border-radius:20px;border:2px solid var(--border);background:#fff;cursor:pointer;font-size:13px;font-weight:500;transition:all .18s;color:#666;}
+    .job-tab.active.doctor{border-color:var(--red);background:var(--red);color:#fff;}
+    .job-tab.active.nurse{border-color:var(--teal);background:var(--teal);color:#fff;}
+    .job-tab.active.clerk{border-color:var(--gold);background:var(--gold);color:#fff;}
+    .job-tab:not(.active):hover{border-color:var(--ink);color:var(--ink);}
+    .q-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    @media(max-width:900px){.q-grid{grid-template-columns:1fr;}}
+    .q-card{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;background:var(--paper);position:relative;overflow:hidden;}
+    .q-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
+    .q-card.cat-philosophy::before{background:var(--red);}
+    .q-card.cat-care::before{background:var(--teal);}
+    .q-card.cat-team::before{background:var(--gold);}
+    .q-card.cat-growth::before{background:var(--green);}
+    .q-card.cat-skill::before{background:var(--orange);}
+    .q-num{font-family:'DM Mono',monospace;font-size:11px;color:#aaa;margin-bottom:4px;}
+    .q-cat-tag{display:inline-block;font-size:10px;font-weight:500;padding:2px 8px;border-radius:20px;margin-bottom:7px;letter-spacing:.3px;}
+    .tag-philosophy{background:var(--red-soft);color:var(--red);}
+    .tag-care{background:var(--teal-soft);color:var(--teal);}
+    .tag-team{background:var(--gold-soft);color:var(--gold);}
+    .tag-growth{background:var(--green-soft);color:var(--green);}
+    .tag-skill{background:var(--orange-soft);color:var(--orange);}
+    .q-text{font-size:13px;line-height:1.6;color:var(--ink);}
+
+    /* SCORE FORM */
+    .score-items{display:flex;flex-direction:column;gap:14px;}
+    .score-item{border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;background:#fff;display:grid;grid-template-columns:28px 1fr 90px;gap:14px;align-items:start;}
+    .si-num{font-family:'DM Mono',monospace;font-size:12px;color:var(--red);font-weight:500;padding-top:2px;}
+    .si-q{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:8px;line-height:1.5;}
+    .si-answer{width:100%;border:1.5px solid var(--border);border-radius:6px;padding:9px 12px;font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--ink);resize:vertical;min-height:70px;outline:none;background:var(--paper);}
+    .si-answer:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px var(--teal-soft);}
+    .si-score-ctrl{display:flex;flex-direction:column;align-items:center;gap:5px;}
+    .si-score-lbl{font-size:10px;color:#aaa;letter-spacing:.5px;}
+    .si-score-val{font-family:'DM Mono',monospace;font-size:30px;font-weight:500;color:var(--ink);line-height:1;}
+    .si-slider{-webkit-appearance:none;width:80px;height:4px;border-radius:2px;background:var(--cream);outline:none;cursor:pointer;}
+    .si-slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--red);cursor:pointer;}
+    .si-btns{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+    .si-btn{width:26px;height:26px;border:1.5px solid var(--border);border-radius:5px;background:#fff;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-weight:500;color:var(--ink);}
+    .si-btn:hover{border-color:var(--teal);background:var(--teal-soft);}
+    .si-btn.selected{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+    /* TOTAL SCORE BAR */
+    .total-bar{background:var(--ink);border-radius:var(--radius-lg);padding:28px 32px;color:#fff;display:flex;align-items:center;justify-content:space-between;margin-top:20px;gap:20px;flex-wrap:wrap;}
+    .tb-info h3{font-family:'Noto Serif JP',serif;font-size:17px;margin-bottom:4px;}
+    .tb-info p{font-size:12px;opacity:.6;}
+    .tb-bar-wrap{flex:1;min-width:200px;}
+    .tb-bar-track{background:rgba(255,255,255,0.1);border-radius:4px;height:10px;overflow:hidden;}
+    .tb-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--teal),#4cc9b0);transition:width .5s ease;width:0%;}
+    .tb-score{text-align:right;}
+    .tb-num{font-family:'DM Mono',monospace;font-size:56px;font-weight:500;line-height:1;}
+    .tb-num span{font-size:18px;opacity:.4;}
+    .verdict{display:inline-block;padding:5px 18px;border-radius:4px;font-size:12px;font-weight:700;letter-spacing:2px;margin-top:6px;}
+    .verdict-pass{background:var(--green);}
+    .verdict-fail{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.6);}
+    .verdict-pending{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.4);}
+
+    /* PIPELINE VISUAL */
+    .pipeline-strip{display:flex;align-items:stretch;gap:0;overflow-x:auto;margin-bottom:24px;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);}
+    .pipe-step{flex:1;min-width:100px;padding:14px 10px;text-align:center;background:#fff;border-right:1px solid var(--border);position:relative;transition:background .2s;}
+    .pipe-step:last-child{border-right:none;}
+    .pipe-step.has-data{background:var(--paper);}
+    .pipe-num{font-family:'DM Mono',monospace;font-size:26px;font-weight:500;line-height:1;margin-bottom:4px;}
+    .pipe-lbl{font-size:11px;color:#888;letter-spacing:.3px;}
+    .pipe-step.p-scheduled .pipe-num{color:var(--ink);}
+    .pipe-step.p-interviewed .pipe-num{color:var(--teal);}
+    .pipe-step.p-offer .pipe-num{color:var(--gold);}
+    .pipe-step.p-negotiating .pipe-num{color:var(--orange);}
+    .pipe-step.p-accepted .pipe-num{color:var(--green);}
+    .pipe-step.p-joined .pipe-num{color:var(--ink);font-weight:700;}
+
+    /* STATS STRIP */
+    .stats-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;}
+    @media(max-width:900px){.stats-strip{grid-template-columns:repeat(2,1fr);}}
+    .stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;text-align:center;}
+    .stat-num{font-family:'DM Mono',monospace;font-size:32px;font-weight:500;color:var(--ink);line-height:1;}
+    .stat-lbl{font-size:11px;color:#999;margin-top:4px;letter-spacing:.5px;}
+
+    /* TABLE */
+    .table-wrap{overflow-x:auto;border-radius:var(--radius-lg);border:1px solid var(--border);}
+    .c-table{width:100%;border-collapse:collapse;font-size:13px;min-width:1100px;}
+    .c-table thead th{background:var(--ink);color:rgba(255,255,255,0.85);padding:11px 14px;text-align:left;font-size:11px;font-weight:500;letter-spacing:.5px;white-space:nowrap;}
+    .c-table tbody td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+    .c-table tbody tr:hover td{background:var(--paper);}
+    .c-table tbody tr:last-child td{border-bottom:none;}
+
+    .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+    .chip-doctor{background:var(--red-soft);color:var(--red);}
+    .chip-nurse{background:var(--teal-soft);color:var(--teal);}
+    .chip-clerk{background:var(--gold-soft);color:var(--gold);}
+    .chip-pass{background:var(--green-soft);color:var(--green);}
+    .chip-fail{background:var(--red-soft);color:var(--red);}
+
+    .source-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;background:var(--cream);color:#666;white-space:nowrap;}
+    .source-chip.agency{background:var(--orange-soft);color:var(--orange);}
+    .source-chip.web{background:var(--teal-soft);color:var(--teal);}
+    .source-chip.referral{background:var(--green-soft);color:var(--green);}
+
+    .score-badge{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:24px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;padding:0 8px;}
+    .sb-pass{background:var(--green-soft);color:var(--green);}
+    .sb-fail{background:var(--red-soft);color:var(--red);}
+    .sb-mid{background:var(--gold-soft);color:var(--gold);}
+    .sb-none{background:var(--cream);color:#aaa;}
+
+    .status-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+    .sc-scheduled{background:var(--cream);color:#666;}
+    .sc-interview{background:var(--teal-soft);color:var(--teal);}
+    .sc-offer{background:var(--gold-soft);color:var(--gold);}
+    .sc-negotiating{background:var(--orange-soft);color:var(--orange);}
+    .sc-waiting{background:var(--red-soft);color:var(--red);}
+    .sc-accepted{background:var(--green-soft);color:var(--green);}
+    .sc-declined{background:#eee;color:#888;}
+    .sc-joined{background:var(--ink);color:#fff;}
+
+    .deadline-tag{font-size:11px;color:var(--red);font-family:'DM Mono',monospace;white-space:nowrap;}
+    .deadline-tag.ok{color:#aaa;}
+    .deadline-tag.soon{color:var(--orange);}
+    .deadline-tag.urgent{color:var(--red);font-weight:700;}
+
+    /* FILTER BAR */
+    .filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;}
+    .filter-bar select,.filter-bar input{border:1.5px solid var(--border);border-radius:var(--radius);padding:7px 12px;font-size:12px;background:#fff;outline:none;color:var(--ink);}
+    .filter-bar select:focus,.filter-bar input:focus{border-color:var(--teal);}
+
+    /* UPLOAD */
+    .upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:18px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:#fff;}
+    .upload-zone:hover{border-color:var(--teal);background:var(--teal-soft);}
+    .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+    .upload-icon{font-size:24px;margin-bottom:6px;}
+    .upload-txt{font-size:13px;font-weight:600;margin-bottom:3px;}
+    .upload-sub{font-size:12px;color:#888;}
+
+    /* MODAL */
+    .overlay{position:fixed;inset:0;background:rgba(22,33,62,0.55);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(4px);padding:20px;}
+    .overlay.open{opacity:1;pointer-events:all;}
+    .modal{background:#fff;border-radius:var(--radius-lg);width:100%;max-width:980px;max-height:92vh;overflow-y:auto;box-shadow:var(--shadow-lg);transform:translateY(14px);transition:transform .25s;}
+    .overlay.open .modal{transform:translateY(0);}
+    .modal-head{background:var(--ink);color:#fff;padding:18px 24px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
+    .modal-head h3{font-family:'Noto Serif JP',serif;font-size:16px;}
+    .modal-close{background:transparent;border:none;color:#fff;font-size:18px;cursor:pointer;opacity:.6;transition:opacity .15s;line-height:1;padding:4px;}
+    .modal-close:hover{opacity:1;}
+    .modal-body{padding:24px;}
+
+    /* STATUS UPDATE PANEL in Modal */
+    .status-panel{background:var(--paper);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px;border:1px solid var(--border);}
+    .status-panel-title{font-size:12px;font-weight:800;letter-spacing:1px;color:var(--red);margin-bottom:14px;text-transform:uppercase;}
+    .status-btn-grid{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+    .status-btn{padding:7px 14px;border-radius:20px;border:2px solid var(--border);background:#fff;cursor:pointer;font-size:12px;font-weight:500;transition:all .18s;color:#666;}
+    .status-btn:hover{border-color:var(--teal);color:var(--teal);}
+    .status-btn.current{border-color:transparent;color:#fff;}
+    .status-btn.current.sc-scheduled-btn{background:#888;}
+    .status-btn.current.sc-interview-btn{background:var(--teal);}
+    .status-btn.current.sc-offer-btn{background:var(--gold);}
+    .status-btn.current.sc-negotiating-btn{background:var(--orange);}
+    .status-btn.current.sc-waiting-btn{background:var(--red);}
+    .status-btn.current.sc-accepted-btn{background:var(--green);}
+    .status-btn.current.sc-declined-btn{background:#888;}
+    .status-btn.current.sc-joined-btn{background:var(--ink);}
+    .process-fields{display:none;}
+    .process-fields.visible{display:block;}
+
+    /* INTERVIEW V2 LAYOUT */
+    .iv2-layout{display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;}
+    @media(max-width:900px){.iv2-layout{grid-template-columns:1fr;}}
+    .iv2-sidebar{position:sticky;top:80px;}
+    .iv2-nav{display:flex;flex-direction:column;gap:4px;margin-bottom:16px;}
+    .iv2-nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius);cursor:pointer;border:1.5px solid transparent;transition:all .2s;background:#fff;}
+    .iv2-nav-item:hover{background:var(--paper);}
+    .iv2-nav-item.active{border-color:var(--red);background:var(--red-soft);}
+    .iv2-nav-item.done{border-color:var(--green);background:var(--green-soft);}
+    .iv2-nav-num{width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:11px;font-weight:600;flex-shrink:0;}
+    .iv2-nav-item.active .iv2-nav-num{background:var(--red);}
+    .iv2-nav-item.done .iv2-nav-num{background:var(--green);}
+    .iv2-nav-label{font-size:11px;font-weight:600;color:var(--ink);line-height:1.3;}
+    .iv2-nav-cat{font-size:10px;color:#aaa;}
+    .iv2-nav-score{margin-left:auto;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;flex-shrink:0;}
+
+    .iv2-question-card{border:2px solid var(--red);border-radius:var(--radius-lg);padding:24px;background:#fff;margin-bottom:16px;}
+    .iv2-q-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+    .iv2-q-num{width:44px;height:44px;border-radius:50%;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:16px;font-weight:700;flex-shrink:0;}
+    .iv2-q-cat-tag{font-size:11px;font-weight:700;letter-spacing:.5px;padding:3px 10px;border-radius:20px;}
+    .iv2-q-text{font-size:15px;font-weight:600;line-height:1.6;margin-bottom:14px;}
+    .iv2-q-intent{font-size:12px;color:#888;line-height:1.5;padding:10px 14px;background:var(--paper);border-radius:var(--radius);margin-bottom:14px;}
+    .iv2-q-intent strong{color:var(--ink);}
+    .iv2-answer-area textarea{width:100%;border:1.5px solid var(--border);border-radius:var(--radius);padding:12px;font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--ink);resize:vertical;min-height:100px;outline:none;background:#fff;}
+    .iv2-answer-area textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-soft);}
+    .iv2-score-row{display:flex;align-items:center;gap:16px;margin-top:14px;padding:14px;background:var(--paper);border-radius:var(--radius);}
+    .iv2-score-label{font-size:12px;font-weight:600;color:var(--ink);}
+    .iv2-score-btns{display:flex;gap:6px;}
+    .iv2-score-btn{width:36px;height:36px;border:2px solid var(--border);border-radius:8px;background:#fff;font-family:'DM Mono',monospace;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-weight:600;color:var(--ink);}
+    .iv2-score-btn:hover{border-color:var(--teal);background:var(--teal-soft);}
+    .iv2-score-btn.selected{background:var(--red);color:#fff;border-color:var(--red);}
+    .iv2-nav-btns{display:flex;gap:8px;margin-top:12px;}
+
+    /* TIMELINE */
+    .timeline{padding-left:20px;border-left:2px solid var(--border);}
+    .tl-item{position:relative;padding:0 0 20px 20px;}
+    .tl-item::before{content:'';position:absolute;left:-7px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--cream);border:2px solid var(--border);}
+    .tl-item.tl-current::before{background:var(--red);border-color:var(--red);}
+    .tl-date{font-family:'DM Mono',monospace;font-size:11px;color:#aaa;margin-bottom:3px;}
+    .tl-content{font-size:13px;color:var(--ink);}
+    .tl-note{font-size:12px;color:#888;margin-top:3px;}
+
+    /* PRINT */
+    @media print{
+      .header,.nav-btn,.btn,.filter-bar{display:none!important;}
+      .page{display:block!important;max-width:100%;padding:20px;}
+      body{background:#fff;font-size:12px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ HEADER ═══════════════════ -->
+<header class="header">
+  <div class="header-logo">
+    <div class="logo-badge">九</div>
+    つくも医療グループ &mdash; 採用管理
+  </div>
+  <nav class="header-nav">
+    <button class="nav-btn active" data-page="dashboard">ダッシュボード</button>
+    <button class="nav-btn" data-page="candidates">候補者一覧</button>
+    <button class="nav-btn" data-page="register">新規登録</button>
+    <button class="nav-btn" data-page="questions">質問マスター</button>
+    <button class="nav-btn" data-page="interview">面接評価</button>
+  </nav>
+</header>
+
+<!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div class="page-title-block">
+      <h1 class="page-title">ダッシュボード</h1>
+      <p class="page-sub">採用パイプライン概況 — 2026年3月</p>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="showPage('register')">＋ 新規候補者</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-strip">
+    <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-lbl">総候補者</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-active">0</div><div class="stat-lbl">進行中</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-interview">0</div><div class="stat-lbl">面接済</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-offer">0</div><div class="stat-lbl">内定</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-joined">0</div><div class="stat-lbl">入職</div></div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card">
+    <div class="card-title">採用パイプライン <span class="tag">PIPELINE</span></div>
+    <div class="pipeline-strip" id="pipeline-strip">
+      <div class="pipe-step p-scheduled has-data"><div class="pipe-num" id="pipe-scheduled">0</div><div class="pipe-lbl">面接予定</div></div>
+      <div class="pipe-step p-interviewed has-data"><div class="pipe-num" id="pipe-interviewed">0</div><div class="pipe-lbl">面接済</div></div>
+      <div class="pipe-step p-offer has-data"><div class="pipe-num" id="pipe-offer">0</div><div class="pipe-lbl">内定提示</div></div>
+      <div class="pipe-step p-negotiating has-data"><div class="pipe-num" id="pipe-negotiating">0</div><div class="pipe-lbl">条件交渉</div></div>
+      <div class="pipe-step p-accepted has-data"><div class="pipe-num" id="pipe-accepted">0</div><div class="pipe-lbl">内定承諾</div></div>
+      <div class="pipe-step p-joined has-data"><div class="pipe-num" id="pipe-joined">0</div><div class="pipe-lbl">入職済</div></div>
+    </div>
+  </div>
+
+  <!-- Recent candidates -->
+  <div class="card">
+    <div class="card-title">最近の候補者 <span class="tag">RECENT</span></div>
+    <div class="table-wrap">
+      <table class="c-table">
+        <thead>
+          <tr>
+            <th>氏名</th>
+            <th>職種</th>
+            <th>応募経路</th>
+            <th>ステータス</th>
+            <th>スコア</th>
+            <th>期限</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="dashboard-table-body">
+          <tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa;">候補者がまだ登録されていません</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CANDIDATES ═══════════════════ -->
+<div class="page" id="page-candidates">
+  <div class="page-header">
+    <div class="page-title-block">
+      <h1 class="page-title">候補者一覧</h1>
+      <p class="page-sub">全候補者の管理・検索</p>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="showPage('register')">＋ 新規登録</button>
+  </div>
+
+  <div class="filter-bar">
+    <select id="filter-job">
+      <option value="">全職種</option>
+      <option value="doctor">医師</option>
+      <option value="nurse">看護師</option>
+      <option value="clerk">事務</option>
+    </select>
+    <select id="filter-status">
+      <option value="">全ステータス</option>
+      <option value="scheduled">面接予定</option>
+      <option value="interviewed">面接済</option>
+      <option value="offer">内定提示</option>
+      <option value="negotiating">条件交渉</option>
+      <option value="accepted">内定承諾</option>
+      <option value="declined">辞退</option>
+      <option value="joined">入職済</option>
+    </select>
+    <select id="filter-source">
+      <option value="">全経路</option>
+      <option value="agency">人材紹介</option>
+      <option value="web">Web応募</option>
+      <option value="referral">紹介</option>
+    </select>
+    <input type="text" id="filter-search" placeholder="氏名で検索..." style="min-width:180px;" />
+  </div>
+
+  <div class="table-wrap">
+    <table class="c-table">
+      <thead>
+        <tr>
+          <th>氏名</th>
+          <th>職種</th>
+          <th>応募経路</th>
+          <th>ステータス</th>
+          <th>スコア</th>
+          <th>面接日</th>
+          <th>期限</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="candidates-table-body">
+        <tr><td colspan="8" style="text-align:center;padding:40px;color:#aaa;">候補者がまだ登録されていません</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════ REGISTER ═══════════════════ -->
+<div class="page" id="page-register">
+  <div class="page-header">
+    <div class="page-title-block">
+      <h1 class="page-title">新規候補者登録</h1>
+      <p class="page-sub">候補者情報を入力してください</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">基本情報 <span class="tag">BASIC</span></div>
+    <div class="form-row col2">
+      <div class="form-group">
+        <label>氏名（漢字）</label>
+        <input type="text" id="reg-name" placeholder="例: 田中 太郎" />
+      </div>
+      <div class="form-group">
+        <label>フリガナ</label>
+        <input type="text" id="reg-furigana" placeholder="例: タナカ タロウ" />
+      </div>
+    </div>
+    <div class="form-row col3">
+      <div class="form-group">
+        <label>職種</label>
+        <select id="reg-job">
+          <option value="doctor">医師</option>
+          <option value="nurse">看護師</option>
+          <option value="clerk">事務</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>応募経路</label>
+        <select id="reg-source">
+          <option value="agency">人材紹介</option>
+          <option value="web">Web応募</option>
+          <option value="referral">紹介</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>面接予定日</label>
+        <input type="date" id="reg-interview-date" />
+      </div>
+    </div>
+    <div class="form-row col2">
+      <div class="form-group">
+        <label>電話番号</label>
+        <input type="tel" id="reg-phone" placeholder="例: 090-1234-5678" />
+      </div>
+      <div class="form-group">
+        <label>メールアドレス</label>
+        <input type="email" id="reg-email" placeholder="例: tanaka@example.com" />
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">経歴・備考 <span class="tag">DETAIL</span></div>
+    <div class="form-row col2">
+      <div class="form-group">
+        <label>現在の勤務先</label>
+        <input type="text" id="reg-current-workplace" placeholder="例: ○○病院" />
+      </div>
+      <div class="form-group">
+        <label>経験年数</label>
+        <input type="number" id="reg-experience" placeholder="例: 5" min="0" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>備考</label>
+        <textarea id="reg-notes" placeholder="特記事項があれば入力してください"></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>履歴書アップロード</label>
+        <div class="upload-zone">
+          <input type="file" id="reg-resume" accept=".pdf,.doc,.docx" />
+          <div class="upload-icon">&#128196;</div>
+          <div class="upload-txt">ファイルをドラッグ＆ドロップ</div>
+          <div class="upload-sub">PDF, DOC, DOCX (最大10MB)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-red" onclick="registerCandidate()">候補者を登録</button>
+    <button class="btn btn-ghost" onclick="showPage('candidates')">キャンセル</button>
+  </div>
+</div>
+
+<!-- ═══════════════════ QUESTIONS ═══════════════════ -->
+<div class="page" id="page-questions">
+  <div class="page-header">
+    <div class="page-title-block">
+      <h1 class="page-title">質問マスター</h1>
+      <p class="page-sub">職種別 面接質問一覧</p>
+    </div>
+  </div>
+
+  <div class="job-tabs">
+    <div class="job-tab active doctor" data-job="doctor" onclick="switchJobTab(this)">医師</div>
+    <div class="job-tab nurse" data-job="nurse" onclick="switchJobTab(this)">看護師</div>
+    <div class="job-tab clerk" data-job="clerk" onclick="switchJobTab(this)">事務</div>
+  </div>
+
+  <div class="q-grid" id="questions-grid">
+    <!-- Populated by JS -->
+  </div>
+</div>
+
+<!-- ═══════════════════ INTERVIEW ═══════════════════ -->
+<div class="page" id="page-interview">
+  <div class="page-header">
+    <div class="page-title-block">
+      <h1 class="page-title">面接評価</h1>
+      <p class="page-sub">候補者を選択して面接評価を開始</p>
+    </div>
+  </div>
+
+  <div class="filter-bar" style="margin-bottom:20px;">
+    <select id="interview-candidate-select" style="min-width:250px;">
+      <option value="">-- 候補者を選択 --</option>
+    </select>
+    <button class="btn btn-teal btn-sm" onclick="startInterview()">面接を開始</button>
+  </div>
+
+  <div id="interview-area" style="display:none;">
+    <div class="iv2-layout">
+      <div class="iv2-sidebar">
+        <div class="card" style="padding:16px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1px;color:var(--red);margin-bottom:10px;">質問一覧</div>
+          <div class="iv2-nav" id="iv2-nav"></div>
+        </div>
+      </div>
+      <div>
+        <div id="iv2-question-area"></div>
+
+        <div class="total-bar" id="total-bar">
+          <div class="tb-info">
+            <h3>総合評価</h3>
+            <p>全質問の評価を入力してください</p>
+          </div>
+          <div class="tb-bar-wrap">
+            <div class="tb-bar-track"><div class="tb-bar-fill" id="tb-bar-fill"></div></div>
+          </div>
+          <div class="tb-score">
+            <div class="tb-num" id="tb-num">0<span>/50</span></div>
+            <div class="verdict verdict-pending" id="tb-verdict">未評価</div>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin-top:16px;">
+          <button class="btn btn-green" onclick="saveInterview()">評価を保存</button>
+          <button class="btn btn-ghost" onclick="resetInterview()">リセット</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CANDIDATE DETAIL MODAL ═══════════════════ -->
+<div class="overlay" id="candidate-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-candidate-name">候補者詳細</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════ DATA ═══════════════════ */
+let candidates = JSON.parse(localStorage.getItem('tsukumo_candidates') || '[]');
+
+const JOB_LABELS = {doctor:'医師', nurse:'看護師', clerk:'事務'};
+const SOURCE_LABELS = {agency:'人材紹介', web:'Web応募', referral:'紹介'};
+const STATUS_LABELS = {
+  scheduled:'面接予定', interviewed:'面接済', offer:'内定提示',
+  negotiating:'条件交渉', waiting:'返答待ち', accepted:'内定承諾',
+  declined:'辞退', joined:'入職済'
+};
+const STATUS_CSS = {
+  scheduled:'sc-scheduled', interviewed:'sc-interview', offer:'sc-offer',
+  negotiating:'sc-negotiating', waiting:'sc-waiting', accepted:'sc-accepted',
+  declined:'sc-declined', joined:'sc-joined'
+};
+
+/* ── Question Bank ── */
+const QUESTIONS = {
+  doctor: [
+    {cat:'philosophy', text:'医療において最も大切にしている理念は何ですか？'},
+    {cat:'philosophy', text:'患者中心の医療とはどのようなものだとお考えですか？'},
+    {cat:'care', text:'困難な症例に直面した際、どのようなアプローチを取りますか？'},
+    {cat:'care', text:'チーム医療における医師の役割をどのようにお考えですか？'},
+    {cat:'team', text:'多職種との連携で工夫していることはありますか？'},
+    {cat:'team', text:'後輩医師の指導についてのお考えを聞かせてください。'},
+    {cat:'growth', text:'今後のキャリアプランについて教えてください。'},
+    {cat:'growth', text:'最新の医学知識をどのように学ばれていますか？'},
+    {cat:'skill', text:'得意とする診療分野と、その実績を教えてください。'},
+    {cat:'skill', text:'当院でどのような貢献ができるとお考えですか？'},
+  ],
+  nurse: [
+    {cat:'philosophy', text:'看護師として最も大切にしている価値観は何ですか？'},
+    {cat:'philosophy', text:'患者様やご家族との信頼関係をどう築きますか？'},
+    {cat:'care', text:'急変時の対応経験について教えてください。'},
+    {cat:'care', text:'患者様の安全を守るために心がけていることは？'},
+    {cat:'team', text:'チームでの協働で大切にしていることは？'},
+    {cat:'team', text:'新人看護師の教育について、あなたの考えは？'},
+    {cat:'growth', text:'看護師としてのキャリアビジョンを教えてください。'},
+    {cat:'growth', text:'これまでの経験で最も成長できた場面は？'},
+    {cat:'skill', text:'得意とする看護領域とその経験を教えてください。'},
+    {cat:'skill', text:'当院にどのような形で貢献できますか？'},
+  ],
+  clerk: [
+    {cat:'philosophy', text:'医療事務として大切にしている考え方は？'},
+    {cat:'philosophy', text:'患者様対応で心がけていることは何ですか？'},
+    {cat:'care', text:'正確性が求められる場面でのあなたの工夫は？'},
+    {cat:'care', text:'クレーム対応の経験について教えてください。'},
+    {cat:'team', text:'他部署との連携で意識していることは？'},
+    {cat:'team', text:'職場の雰囲気づくりで心がけていることは？'},
+    {cat:'growth', text:'今後どのようなスキルを身につけたいですか？'},
+    {cat:'growth', text:'これまでの事務経験で最も学びが大きかったことは？'},
+    {cat:'skill', text:'医療事務のスキルや資格について教えてください。'},
+    {cat:'skill', text:'当院での業務改善のアイデアがあれば教えてください。'},
+  ]
+};
+
+const CAT_LABELS = {philosophy:'理念', care:'患者対応', team:'チーム', growth:'成長', skill:'専門性'};
+const CAT_TAG_CSS = {philosophy:'tag-philosophy', care:'tag-care', team:'tag-team', growth:'tag-growth', skill:'tag-skill'};
+const CAT_CARD_CSS = {philosophy:'cat-philosophy', care:'cat-care', team:'cat-team', growth:'cat-growth', skill:'cat-skill'};
+
+/* ═══════════════════ NAVIGATION ═══════════════════ */
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.page === pageId);
+  });
+  if (pageId === 'dashboard') refreshDashboard();
+  if (pageId === 'candidates') refreshCandidates();
+  if (pageId === 'questions') renderQuestions('doctor');
+  if (pageId === 'interview') refreshInterviewSelect();
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => showPage(btn.dataset.page));
+});
+
+/* ═══════════════════ PERSISTENCE ═══════════════════ */
+function save() { localStorage.setItem('tsukumo_candidates', JSON.stringify(candidates)); }
+
+/* ═══════════════════ REGISTER ═══════════════════ */
+function registerCandidate() {
+  const name = document.getElementById('reg-name').value.trim();
+  if (!name) { alert('氏名を入力してください。'); return; }
+
+  const candidate = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    name: name,
+    furigana: document.getElementById('reg-furigana').value.trim(),
+    job: document.getElementById('reg-job').value,
+    source: document.getElementById('reg-source').value,
+    interviewDate: document.getElementById('reg-interview-date').value,
+    phone: document.getElementById('reg-phone').value.trim(),
+    email: document.getElementById('reg-email').value.trim(),
+    currentWorkplace: document.getElementById('reg-current-workplace').value.trim(),
+    experience: document.getElementById('reg-experience').value,
+    notes: document.getElementById('reg-notes').value.trim(),
+    status: 'scheduled',
+    scores: [],
+    answers: [],
+    totalScore: null,
+    createdAt: new Date().toISOString(),
+    timeline: [{date: new Date().toISOString(), action: '候補者登録', note: ''}]
+  };
+
+  candidates.push(candidate);
+  save();
+
+  // Clear form
+  ['reg-name','reg-furigana','reg-phone','reg-email','reg-current-workplace','reg-experience','reg-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('reg-interview-date').value = '';
+
+  alert(name + ' さんを登録しました。');
+  showPage('dashboard');
+}
+
+/* ═══════════════════ DASHBOARD ═══════════════════ */
+function refreshDashboard() {
+  const total = candidates.length;
+  const byStatus = {};
+  candidates.forEach(c => { byStatus[c.status] = (byStatus[c.status]||0) + 1; });
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-active').textContent = total - (byStatus.declined||0) - (byStatus.joined||0);
+  document.getElementById('stat-interview').textContent = (byStatus.interviewed||0) + (byStatus.offer||0) + (byStatus.negotiating||0) + (byStatus.accepted||0) + (byStatus.joined||0);
+  document.getElementById('stat-offer').textContent = (byStatus.offer||0) + (byStatus.negotiating||0) + (byStatus.accepted||0);
+  document.getElementById('stat-joined').textContent = byStatus.joined||0;
+
+  document.getElementById('pipe-scheduled').textContent = byStatus.scheduled||0;
+  document.getElementById('pipe-interviewed').textContent = byStatus.interviewed||0;
+  document.getElementById('pipe-offer').textContent = byStatus.offer||0;
+  document.getElementById('pipe-negotiating').textContent = (byStatus.negotiating||0) + (byStatus.waiting||0);
+  document.getElementById('pipe-accepted').textContent = byStatus.accepted||0;
+  document.getElementById('pipe-joined').textContent = byStatus.joined||0;
+
+  renderTable('dashboard-table-body', candidates.slice(-10).reverse(), false);
+}
+
+/* ═══════════════════ CANDIDATES LIST ═══════════════════ */
+function refreshCandidates() {
+  let filtered = [...candidates];
+  const fJob = document.getElementById('filter-job').value;
+  const fStatus = document.getElementById('filter-status').value;
+  const fSource = document.getElementById('filter-source').value;
+  const fSearch = document.getElementById('filter-search').value.trim().toLowerCase();
+
+  if (fJob) filtered = filtered.filter(c => c.job === fJob);
+  if (fStatus) filtered = filtered.filter(c => c.status === fStatus);
+  if (fSource) filtered = filtered.filter(c => c.source === fSource);
+  if (fSearch) filtered = filtered.filter(c => c.name.toLowerCase().includes(fSearch) || (c.furigana||'').toLowerCase().includes(fSearch));
+
+  renderTable('candidates-table-body', filtered, true);
+}
+
+['filter-job','filter-status','filter-source','filter-search'].forEach(id => {
+  document.getElementById(id).addEventListener('input', refreshCandidates);
+});
+
+/* ═══════════════════ TABLE RENDER ═══════════════════ */
+function renderTable(tbodyId, data, showDate) {
+  const tbody = document.getElementById(tbodyId);
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="' + (showDate?8:7) + '" style="text-align:center;padding:40px;color:#aaa;">候補者がまだ登録されていません</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(c => {
+    const jobChip = '<span class="chip chip-' + c.job + '">' + JOB_LABELS[c.job] + '</span>';
+    const srcChip = '<span class="source-chip ' + c.source + '">' + SOURCE_LABELS[c.source] + '</span>';
+    const statusChip = '<span class="status-chip ' + (STATUS_CSS[c.status]||'') + '">' + (STATUS_LABELS[c.status]||c.status) + '</span>';
+
+    let scoreBadge = '<span class="score-badge sb-none">--</span>';
+    if (c.totalScore !== null) {
+      const pct = c.totalScore / 50 * 100;
+      const cls = pct >= 70 ? 'sb-pass' : pct >= 50 ? 'sb-mid' : 'sb-fail';
+      scoreBadge = '<span class="score-badge ' + cls + '">' + c.totalScore + '/50</span>';
+    }
+
+    let deadline = '';
+    if (c.interviewDate) {
+      const diff = Math.ceil((new Date(c.interviewDate) - new Date()) / 86400000);
+      const cls = diff < 0 ? 'ok' : diff <= 3 ? 'urgent' : diff <= 7 ? 'soon' : 'ok';
+      deadline = '<span class="deadline-tag ' + cls + '">' + c.interviewDate + '</span>';
+    }
+
+    const dateCol = showDate ? '<td>' + (c.interviewDate || '--') + '</td>' : '';
+
+    return '<tr>' +
+      '<td><strong>' + escHtml(c.name) + '</strong></td>' +
+      '<td>' + jobChip + '</td>' +
+      '<td>' + srcChip + '</td>' +
+      '<td>' + statusChip + '</td>' +
+      '<td>' + scoreBadge + '</td>' +
+      dateCol +
+      '<td>' + deadline + '</td>' +
+      '<td><button class="btn btn-xs btn-ghost" onclick="openCandidate(\'' + c.id + '\')">詳細</button></td>' +
+      '</tr>';
+  }).join('');
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+/* ═══════════════════ QUESTIONS ═══════════════════ */
+function switchJobTab(el) {
+  document.querySelectorAll('.job-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderQuestions(el.dataset.job);
+}
+
+function renderQuestions(job) {
+  const grid = document.getElementById('questions-grid');
+  const qs = QUESTIONS[job] || [];
+  grid.innerHTML = qs.map((q, i) => {
+    return '<div class="q-card ' + CAT_CARD_CSS[q.cat] + '">' +
+      '<div class="q-num">Q' + String(i+1).padStart(2,'0') + '</div>' +
+      '<div class="q-cat-tag ' + CAT_TAG_CSS[q.cat] + '">' + CAT_LABELS[q.cat] + '</div>' +
+      '<div class="q-text">' + escHtml(q.text) + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+/* ═══════════════════ INTERVIEW ═══════════════════ */
+let currentInterviewCandidate = null;
+let interviewScores = [];
+let interviewAnswers = [];
+
+function refreshInterviewSelect() {
+  const sel = document.getElementById('interview-candidate-select');
+  const opts = candidates.filter(c => c.status !== 'declined').map(c =>
+    '<option value="' + c.id + '">' + escHtml(c.name) + ' (' + JOB_LABELS[c.job] + ')</option>'
+  );
+  sel.innerHTML = '<option value="">-- 候補者を選択 --</option>' + opts.join('');
+}
+
+function startInterview() {
+  const id = document.getElementById('interview-candidate-select').value;
+  if (!id) { alert('候補者を選択してください。'); return; }
+  const c = candidates.find(x => x.id === id);
+  if (!c) return;
+
+  currentInterviewCandidate = c;
+  const qs = QUESTIONS[c.job] || [];
+  interviewScores = c.scores.length ? [...c.scores] : qs.map(() => 0);
+  interviewAnswers = c.answers.length ? [...c.answers] : qs.map(() => '');
+
+  document.getElementById('interview-area').style.display = 'block';
+  renderInterviewNav(qs, 0);
+  renderInterviewQuestion(qs, 0);
+  updateTotalScore(qs);
+}
+
+function renderInterviewNav(qs, activeIdx) {
+  const nav = document.getElementById('iv2-nav');
+  nav.innerHTML = qs.map((q, i) => {
+    const score = interviewScores[i];
+    const isDone = score > 0;
+    const cls = i === activeIdx ? 'active' : isDone ? 'done' : '';
+    return '<div class="iv2-nav-item ' + cls + '" onclick="goToQuestion(' + i + ')">' +
+      '<div class="iv2-nav-num">' + (i+1) + '</div>' +
+      '<div><div class="iv2-nav-label">Q' + String(i+1).padStart(2,'0') + '</div><div class="iv2-nav-cat">' + CAT_LABELS[q.cat] + '</div></div>' +
+      '<div class="iv2-nav-score" style="color:' + (score > 0 ? 'var(--green)' : '#ccc') + '">' + score + '/5</div>' +
+      '</div>';
+  }).join('');
+}
+
+function goToQuestion(idx) {
+  const qs = QUESTIONS[currentInterviewCandidate.job];
+  renderInterviewNav(qs, idx);
+  renderInterviewQuestion(qs, idx);
+}
+
+function renderInterviewQuestion(qs, idx) {
+  const q = qs[idx];
+  const area = document.getElementById('iv2-question-area');
+  area.innerHTML =
+    '<div class="iv2-question-card">' +
+      '<div class="iv2-q-header">' +
+        '<div class="iv2-q-num">' + (idx+1) + '</div>' +
+        '<div>' +
+          '<div class="iv2-q-cat-tag ' + CAT_TAG_CSS[q.cat] + '">' + CAT_LABELS[q.cat] + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="iv2-q-text">' + escHtml(q.text) + '</div>' +
+      '<div class="iv2-q-intent"><strong>評価ポイント：</strong> 候補者の' + CAT_LABELS[q.cat] + 'に関する考え方と実践力</div>' +
+      '<div class="iv2-answer-area">' +
+        '<textarea id="iv2-answer-' + idx + '" placeholder="回答内容をメモ...">' + escHtml(interviewAnswers[idx]) + '</textarea>' +
+      '</div>' +
+      '<div class="iv2-score-row">' +
+        '<div class="iv2-score-label">スコア</div>' +
+        '<div class="iv2-score-btns">' +
+          [1,2,3,4,5].map(s =>
+            '<button class="iv2-score-btn' + (interviewScores[idx]===s?' selected':'') + '" onclick="setScore(' + idx + ',' + s + ')">' + s + '</button>'
+          ).join('') +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="iv2-nav-btns">' +
+      (idx > 0 ? '<button class="btn btn-ghost btn-sm" onclick="goToQuestion(' + (idx-1) + ')">前へ</button>' : '') +
+      (idx < qs.length-1 ? '<button class="btn btn-primary btn-sm" onclick="saveAndNext(' + idx + ')">次へ</button>' : '') +
+    '</div>';
+}
+
+function setScore(idx, score) {
+  interviewScores[idx] = score;
+  const qs = QUESTIONS[currentInterviewCandidate.job];
+
+  // Save answer text
+  const ta = document.getElementById('iv2-answer-' + idx);
+  if (ta) interviewAnswers[idx] = ta.value;
+
+  renderInterviewNav(qs, idx);
+  renderInterviewQuestion(qs, idx);
+  updateTotalScore(qs);
+}
+
+function saveAndNext(idx) {
+  const ta = document.getElementById('iv2-answer-' + idx);
+  if (ta) interviewAnswers[idx] = ta.value;
+  goToQuestion(idx + 1);
+}
+
+function updateTotalScore(qs) {
+  const total = interviewScores.reduce((a,b) => a+b, 0);
+  const max = qs.length * 5;
+  const pct = max > 0 ? (total / max * 100) : 0;
+
+  document.getElementById('tb-num').innerHTML = total + '<span>/' + max + '</span>';
+  document.getElementById('tb-bar-fill').style.width = pct + '%';
+
+  const verdict = document.getElementById('tb-verdict');
+  if (total === 0) {
+    verdict.textContent = '未評価';
+    verdict.className = 'verdict verdict-pending';
+  } else if (pct >= 70) {
+    verdict.textContent = '合格';
+    verdict.className = 'verdict verdict-pass';
+  } else {
+    verdict.textContent = '要検討';
+    verdict.className = 'verdict verdict-fail';
+  }
+}
+
+function saveInterview() {
+  if (!currentInterviewCandidate) return;
+
+  // Save current answer
+  const qs = QUESTIONS[currentInterviewCandidate.job];
+  qs.forEach((_, i) => {
+    const ta = document.getElementById('iv2-answer-' + i);
+    if (ta) interviewAnswers[i] = ta.value;
+  });
+
+  const c = candidates.find(x => x.id === currentInterviewCandidate.id);
+  if (!c) return;
+
+  c.scores = [...interviewScores];
+  c.answers = [...interviewAnswers];
+  c.totalScore = interviewScores.reduce((a,b) => a+b, 0);
+  if (c.status === 'scheduled') c.status = 'interviewed';
+  c.timeline.push({date: new Date().toISOString(), action: '面接評価完了', note: '総合スコア: ' + c.totalScore + '/' + (qs.length*5)});
+
+  save();
+  alert('評価を保存しました。（スコア: ' + c.totalScore + '/' + (qs.length*5) + '）');
+  refreshDashboard();
+}
+
+function resetInterview() {
+  if (!currentInterviewCandidate) return;
+  if (!confirm('評価をリセットしますか？')) return;
+  const qs = QUESTIONS[currentInterviewCandidate.job];
+  interviewScores = qs.map(() => 0);
+  interviewAnswers = qs.map(() => '');
+  renderInterviewNav(qs, 0);
+  renderInterviewQuestion(qs, 0);
+  updateTotalScore(qs);
+}
+
+/* ═══════════════════ CANDIDATE MODAL ═══════════════════ */
+function openCandidate(id) {
+  const c = candidates.find(x => x.id === id);
+  if (!c) return;
+
+  document.getElementById('modal-candidate-name').textContent = c.name + ' — 候補者詳細';
+  const body = document.getElementById('modal-body');
+
+  const qs = QUESTIONS[c.job] || [];
+
+  let scoreHtml = '';
+  if (c.totalScore !== null) {
+    const pct = c.totalScore / (qs.length * 5) * 100;
+    scoreHtml = '<div class="section-divider">面接評価</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;">' +
+      qs.map((q, i) =>
+        '<div style="text-align:center;padding:8px;background:var(--paper);border-radius:6px;">' +
+        '<div style="font-size:10px;color:#888;">Q' + (i+1) + '</div>' +
+        '<div style="font-family:\'DM Mono\',monospace;font-size:18px;font-weight:600;color:' + (c.scores[i]>=4?'var(--green)':c.scores[i]>=3?'var(--gold)':'var(--red)') + ';">' + (c.scores[i]||0) + '</div>' +
+        '</div>'
+      ).join('') +
+      '</div>' +
+      '<div style="font-size:13px;"><strong>総合: </strong>' + c.totalScore + '/' + (qs.length*5) +
+      ' (' + Math.round(pct) + '%) — ' + (pct >= 70 ? '<span style="color:var(--green);font-weight:700;">合格</span>' : '<span style="color:var(--red);font-weight:700;">要検討</span>') + '</div>';
+  }
+
+  let timelineHtml = '<div class="section-divider">タイムライン</div><div class="timeline">';
+  c.timeline.forEach((t, i) => {
+    const isLast = i === c.timeline.length - 1;
+    timelineHtml += '<div class="tl-item' + (isLast ? ' tl-current' : '') + '">' +
+      '<div class="tl-date">' + new Date(t.date).toLocaleDateString('ja-JP') + '</div>' +
+      '<div class="tl-content">' + escHtml(t.action) + '</div>' +
+      (t.note ? '<div class="tl-note">' + escHtml(t.note) + '</div>' : '') +
+      '</div>';
+  });
+  timelineHtml += '</div>';
+
+  body.innerHTML =
+    '<div class="status-panel">' +
+      '<div class="status-panel-title">ステータス変更</div>' +
+      '<div class="status-btn-grid">' +
+        Object.keys(STATUS_LABELS).map(s =>
+          '<button class="status-btn' + (c.status===s?' current '+STATUS_CSS[s]+'-btn':'') + '" onclick="changeStatus(\'' + c.id + '\',\'' + s + '\')">' + STATUS_LABELS[s] + '</button>'
+        ).join('') +
+      '</div>' +
+    '</div>' +
+
+    '<div class="form-row col2">' +
+      '<div class="form-group"><label>氏名</label><div style="padding:9px 0;font-weight:600;">' + escHtml(c.name) + '</div></div>' +
+      '<div class="form-group"><label>フリガナ</label><div style="padding:9px 0;">' + escHtml(c.furigana||'--') + '</div></div>' +
+    '</div>' +
+    '<div class="form-row col3">' +
+      '<div class="form-group"><label>職種</label><div style="padding:9px 0;"><span class="chip chip-' + c.job + '">' + JOB_LABELS[c.job] + '</span></div></div>' +
+      '<div class="form-group"><label>応募経路</label><div style="padding:9px 0;"><span class="source-chip ' + c.source + '">' + SOURCE_LABELS[c.source] + '</span></div></div>' +
+      '<div class="form-group"><label>面接予定日</label><div style="padding:9px 0;">' + (c.interviewDate||'--') + '</div></div>' +
+    '</div>' +
+    '<div class="form-row col2">' +
+      '<div class="form-group"><label>電話番号</label><div style="padding:9px 0;">' + escHtml(c.phone||'--') + '</div></div>' +
+      '<div class="form-group"><label>メール</label><div style="padding:9px 0;">' + escHtml(c.email||'--') + '</div></div>' +
+    '</div>' +
+    '<div class="form-row col2">' +
+      '<div class="form-group"><label>現在の勤務先</label><div style="padding:9px 0;">' + escHtml(c.currentWorkplace||'--') + '</div></div>' +
+      '<div class="form-group"><label>経験年数</label><div style="padding:9px 0;">' + (c.experience||'--') + '年</div></div>' +
+    '</div>' +
+    (c.notes ? '<div class="form-group"><label>備考</label><div style="padding:9px 0;font-size:13px;color:#666;">' + escHtml(c.notes) + '</div></div>' : '') +
+
+    scoreHtml +
+    timelineHtml;
+
+  document.getElementById('candidate-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('candidate-modal').classList.remove('open');
+}
+
+document.getElementById('candidate-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+/* ═══════════════════ STATUS CHANGE ═══════════════════ */
+function changeStatus(id, newStatus) {
+  const c = candidates.find(x => x.id === id);
+  if (!c || c.status === newStatus) return;
+
+  c.status = newStatus;
+  c.timeline.push({date: new Date().toISOString(), action: 'ステータス変更: ' + STATUS_LABELS[newStatus], note: ''});
+  save();
+  openCandidate(id);
+  refreshDashboard();
+}
+
+/* ═══════════════════ INIT ═══════════════════ */
+refreshDashboard();
+renderQuestions('doctor');
+</script>
+</body>
+</html>
