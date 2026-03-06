@@ -598,8 +598,51 @@
 </div>
 
 <script>
+/* ═══════════════════ API CLIENT ═══════════════════ */
+const API_BASE = '/api';
+let apiAvailable = true;
+
+async function apiCall(method, path, body) {
+  try {
+    const opts = {
+      method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(API_BASE + path, opts);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: 'サーバーエラー' }));
+      throw new Error(err.error || 'HTTP ' + res.status);
+    }
+    apiAvailable = true;
+    return await res.json();
+  } catch (e) {
+    if (e.message === 'Failed to fetch' || e.name === 'TypeError') {
+      apiAvailable = false;
+      console.warn('API接続失敗 — localStorageフォールバックを使用');
+    }
+    throw e;
+  }
+}
+
 /* ═══════════════════ DATA ═══════════════════ */
 let candidates = JSON.parse(localStorage.getItem('tsukumo_candidates') || '[]');
+
+function saveLocal() {
+  localStorage.setItem('tsukumo_candidates', JSON.stringify(candidates));
+}
+
+async function syncFromServer() {
+  try {
+    const res = await apiCall('GET', '/candidates');
+    candidates = res.data;
+    saveLocal();
+    return true;
+  } catch {
+    // Use localStorage data as fallback
+    return false;
+  }
+}
 
 const JOB_LABELS = {doctor:'医師', nurse:'看護師', clerk:'事務'};
 const SOURCE_LABELS = {agency:'人材紹介', web:'Web応募', referral:'紹介'};
@@ -675,16 +718,12 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
   btn.addEventListener('click', () => showPage(btn.dataset.page));
 });
 
-/* ═══════════════════ PERSISTENCE ═══════════════════ */
-function save() { localStorage.setItem('tsukumo_candidates', JSON.stringify(candidates)); }
-
 /* ═══════════════════ REGISTER ═══════════════════ */
-function registerCandidate() {
+async function registerCandidate() {
   const name = document.getElementById('reg-name').value.trim();
   if (!name) { alert('氏名を入力してください。'); return; }
 
-  const candidate = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+  const candidateData = {
     name: name,
     furigana: document.getElementById('reg-furigana').value.trim(),
     job: document.getElementById('reg-job').value,
@@ -694,17 +733,28 @@ function registerCandidate() {
     email: document.getElementById('reg-email').value.trim(),
     currentWorkplace: document.getElementById('reg-current-workplace').value.trim(),
     experience: document.getElementById('reg-experience').value,
-    notes: document.getElementById('reg-notes').value.trim(),
-    status: 'scheduled',
-    scores: [],
-    answers: [],
-    totalScore: null,
-    createdAt: new Date().toISOString(),
-    timeline: [{date: new Date().toISOString(), action: '候補者登録', note: ''}]
+    notes: document.getElementById('reg-notes').value.trim()
   };
 
-  candidates.push(candidate);
-  save();
+  try {
+    const res = await apiCall('POST', '/candidates', candidateData);
+    candidates.push(res.data);
+    saveLocal();
+  } catch {
+    // Fallback: create locally
+    const candidate = {
+      ...candidateData,
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+      status: 'scheduled',
+      scores: [],
+      answers: [],
+      totalScore: null,
+      createdAt: new Date().toISOString(),
+      timeline: [{date: new Date().toISOString(), action: '候補者登録', note: ''}]
+    };
+    candidates.push(candidate);
+    saveLocal();
+  }
 
   // Clear form
   ['reg-name','reg-furigana','reg-phone','reg-email','reg-current-workplace','reg-experience','reg-notes'].forEach(id => {
@@ -717,41 +767,73 @@ function registerCandidate() {
 }
 
 /* ═══════════════════ DASHBOARD ═══════════════════ */
-function refreshDashboard() {
-  const total = candidates.length;
-  const byStatus = {};
-  candidates.forEach(c => { byStatus[c.status] = (byStatus[c.status]||0) + 1; });
+async function refreshDashboard() {
+  // Try to sync from server first
+  await syncFromServer();
 
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-active').textContent = total - (byStatus.declined||0) - (byStatus.joined||0);
-  document.getElementById('stat-interview').textContent = (byStatus.interviewed||0) + (byStatus.offer||0) + (byStatus.negotiating||0) + (byStatus.accepted||0) + (byStatus.joined||0);
-  document.getElementById('stat-offer').textContent = (byStatus.offer||0) + (byStatus.negotiating||0) + (byStatus.accepted||0);
-  document.getElementById('stat-joined').textContent = byStatus.joined||0;
+  try {
+    const res = await apiCall('GET', '/stats');
+    const s = res.data;
+    document.getElementById('stat-total').textContent = s.total;
+    document.getElementById('stat-active').textContent = s.active;
+    document.getElementById('stat-interview').textContent = s.interviewed;
+    document.getElementById('stat-offer').textContent = s.offer;
+    document.getElementById('stat-joined').textContent = s.joined;
 
-  document.getElementById('pipe-scheduled').textContent = byStatus.scheduled||0;
-  document.getElementById('pipe-interviewed').textContent = byStatus.interviewed||0;
-  document.getElementById('pipe-offer').textContent = byStatus.offer||0;
-  document.getElementById('pipe-negotiating').textContent = (byStatus.negotiating||0) + (byStatus.waiting||0);
-  document.getElementById('pipe-accepted').textContent = byStatus.accepted||0;
-  document.getElementById('pipe-joined').textContent = byStatus.joined||0;
+    document.getElementById('pipe-scheduled').textContent = s.pipeline.scheduled;
+    document.getElementById('pipe-interviewed').textContent = s.pipeline.interviewed;
+    document.getElementById('pipe-offer').textContent = s.pipeline.offer;
+    document.getElementById('pipe-negotiating').textContent = s.pipeline.negotiating;
+    document.getElementById('pipe-accepted').textContent = s.pipeline.accepted;
+    document.getElementById('pipe-joined').textContent = s.pipeline.joined;
+  } catch {
+    // Fallback: compute from local data
+    const total = candidates.length;
+    const byStatus = {};
+    candidates.forEach(c => { byStatus[c.status] = (byStatus[c.status]||0) + 1; });
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-active').textContent = total - (byStatus.declined||0) - (byStatus.joined||0);
+    document.getElementById('stat-interview').textContent = (byStatus.interviewed||0) + (byStatus.offer||0) + (byStatus.negotiating||0) + (byStatus.accepted||0) + (byStatus.joined||0);
+    document.getElementById('stat-offer').textContent = (byStatus.offer||0) + (byStatus.negotiating||0) + (byStatus.accepted||0);
+    document.getElementById('stat-joined').textContent = byStatus.joined||0;
+
+    document.getElementById('pipe-scheduled').textContent = byStatus.scheduled||0;
+    document.getElementById('pipe-interviewed').textContent = byStatus.interviewed||0;
+    document.getElementById('pipe-offer').textContent = byStatus.offer||0;
+    document.getElementById('pipe-negotiating').textContent = (byStatus.negotiating||0) + (byStatus.waiting||0);
+    document.getElementById('pipe-accepted').textContent = byStatus.accepted||0;
+    document.getElementById('pipe-joined').textContent = byStatus.joined||0;
+  }
 
   renderTable('dashboard-table-body', candidates.slice(-10).reverse(), false);
 }
 
 /* ═══════════════════ CANDIDATES LIST ═══════════════════ */
-function refreshCandidates() {
-  let filtered = [...candidates];
+async function refreshCandidates() {
   const fJob = document.getElementById('filter-job').value;
   const fStatus = document.getElementById('filter-status').value;
   const fSource = document.getElementById('filter-source').value;
   const fSearch = document.getElementById('filter-search').value.trim().toLowerCase();
 
-  if (fJob) filtered = filtered.filter(c => c.job === fJob);
-  if (fStatus) filtered = filtered.filter(c => c.status === fStatus);
-  if (fSource) filtered = filtered.filter(c => c.source === fSource);
-  if (fSearch) filtered = filtered.filter(c => c.name.toLowerCase().includes(fSearch) || (c.furigana||'').toLowerCase().includes(fSearch));
-
-  renderTable('candidates-table-body', filtered, true);
+  try {
+    const params = new URLSearchParams();
+    if (fJob) params.set('job', fJob);
+    if (fStatus) params.set('status', fStatus);
+    if (fSource) params.set('source', fSource);
+    if (fSearch) params.set('search', fSearch);
+    const qs = params.toString();
+    const res = await apiCall('GET', '/candidates' + (qs ? '?' + qs : ''));
+    renderTable('candidates-table-body', res.data, true);
+  } catch {
+    // Fallback: filter locally
+    let filtered = [...candidates];
+    if (fJob) filtered = filtered.filter(c => c.job === fJob);
+    if (fStatus) filtered = filtered.filter(c => c.status === fStatus);
+    if (fSource) filtered = filtered.filter(c => c.source === fSource);
+    if (fSearch) filtered = filtered.filter(c => c.name.toLowerCase().includes(fSearch) || (c.furigana||'').toLowerCase().includes(fSearch));
+    renderTable('candidates-table-body', filtered, true);
+  }
 }
 
 ['filter-job','filter-status','filter-source','filter-search'].forEach(id => {
@@ -829,7 +911,8 @@ let currentInterviewCandidate = null;
 let interviewScores = [];
 let interviewAnswers = [];
 
-function refreshInterviewSelect() {
+async function refreshInterviewSelect() {
+  await syncFromServer();
   const sel = document.getElementById('interview-candidate-select');
   const opts = candidates.filter(c => c.status !== 'declined').map(c =>
     '<option value="' + c.id + '">' + escHtml(c.name) + ' (' + JOB_LABELS[c.job] + ')</option>'
@@ -837,16 +920,27 @@ function refreshInterviewSelect() {
   sel.innerHTML = '<option value="">-- 候補者を選択 --</option>' + opts.join('');
 }
 
-function startInterview() {
+async function startInterview() {
   const id = document.getElementById('interview-candidate-select').value;
   if (!id) { alert('候補者を選択してください。'); return; }
-  const c = candidates.find(x => x.id === id);
+
+  let c;
+  try {
+    const res = await apiCall('GET', '/candidates/' + id);
+    c = res.data;
+    // Update local cache
+    const idx = candidates.findIndex(x => x.id === id);
+    if (idx >= 0) candidates[idx] = c; else candidates.push(c);
+    saveLocal();
+  } catch {
+    c = candidates.find(x => x.id === id);
+  }
   if (!c) return;
 
   currentInterviewCandidate = c;
   const qs = QUESTIONS[c.job] || [];
-  interviewScores = c.scores.length ? [...c.scores] : qs.map(() => 0);
-  interviewAnswers = c.answers.length ? [...c.answers] : qs.map(() => '');
+  interviewScores = c.scores && c.scores.length ? [...c.scores] : qs.map(() => 0);
+  interviewAnswers = c.answers && c.answers.length ? [...c.answers] : qs.map(() => '');
 
   document.getElementById('interview-area').style.display = 'block';
   renderInterviewNav(qs, 0);
@@ -869,7 +963,13 @@ function renderInterviewNav(qs, activeIdx) {
 }
 
 function goToQuestion(idx) {
+  // Save current answer before navigating
   const qs = QUESTIONS[currentInterviewCandidate.job];
+  const currentArea = document.querySelector('#iv2-question-area textarea');
+  if (currentArea && currentArea.id) {
+    const currentIdx = parseInt(currentArea.id.replace('iv2-answer-', ''));
+    if (!isNaN(currentIdx)) interviewAnswers[currentIdx] = currentArea.value;
+  }
   renderInterviewNav(qs, idx);
   renderInterviewQuestion(qs, idx);
 }
@@ -945,7 +1045,7 @@ function updateTotalScore(qs) {
   }
 }
 
-function saveInterview() {
+async function saveInterview() {
   if (!currentInterviewCandidate) return;
 
   // Save current answer
@@ -955,17 +1055,32 @@ function saveInterview() {
     if (ta) interviewAnswers[i] = ta.value;
   });
 
-  const c = candidates.find(x => x.id === currentInterviewCandidate.id);
-  if (!c) return;
+  try {
+    const res = await apiCall('PUT', '/candidates/' + currentInterviewCandidate.id + '/interview', {
+      scores: [...interviewScores],
+      answers: [...interviewAnswers]
+    });
+    // Update local cache
+    const idx = candidates.findIndex(x => x.id === currentInterviewCandidate.id);
+    if (idx >= 0) candidates[idx] = res.data;
+    saveLocal();
+    currentInterviewCandidate = res.data;
 
-  c.scores = [...interviewScores];
-  c.answers = [...interviewAnswers];
-  c.totalScore = interviewScores.reduce((a,b) => a+b, 0);
-  if (c.status === 'scheduled') c.status = 'interviewed';
-  c.timeline.push({date: new Date().toISOString(), action: '面接評価完了', note: '総合スコア: ' + c.totalScore + '/' + (qs.length*5)});
+    const totalScore = res.data.totalScore;
+    alert('評価を保存しました。（スコア: ' + totalScore + '/' + (qs.length*5) + '）');
+  } catch {
+    // Fallback: save locally
+    const c = candidates.find(x => x.id === currentInterviewCandidate.id);
+    if (!c) return;
+    c.scores = [...interviewScores];
+    c.answers = [...interviewAnswers];
+    c.totalScore = interviewScores.reduce((a,b) => a+b, 0);
+    if (c.status === 'scheduled') c.status = 'interviewed';
+    c.timeline.push({date: new Date().toISOString(), action: '面接評価完了', note: '総合スコア: ' + c.totalScore + '/' + (qs.length*5)});
+    saveLocal();
+    alert('評価を保存しました（ローカル）。（スコア: ' + c.totalScore + '/' + (qs.length*5) + '）');
+  }
 
-  save();
-  alert('評価を保存しました。（スコア: ' + c.totalScore + '/' + (qs.length*5) + '）');
   refreshDashboard();
 }
 
@@ -981,8 +1096,18 @@ function resetInterview() {
 }
 
 /* ═══════════════════ CANDIDATE MODAL ═══════════════════ */
-function openCandidate(id) {
-  const c = candidates.find(x => x.id === id);
+async function openCandidate(id) {
+  let c;
+  try {
+    const res = await apiCall('GET', '/candidates/' + id);
+    c = res.data;
+    // Update local cache
+    const idx = candidates.findIndex(x => x.id === id);
+    if (idx >= 0) candidates[idx] = c; else candidates.push(c);
+    saveLocal();
+  } catch {
+    c = candidates.find(x => x.id === id);
+  }
   if (!c) return;
 
   document.getElementById('modal-candidate-name').textContent = c.name + ' — 候補者詳細';
@@ -1061,20 +1186,32 @@ document.getElementById('candidate-modal').addEventListener('click', function(e)
 });
 
 /* ═══════════════════ STATUS CHANGE ═══════════════════ */
-function changeStatus(id, newStatus) {
-  const c = candidates.find(x => x.id === id);
-  if (!c || c.status === newStatus) return;
+async function changeStatus(id, newStatus) {
+  try {
+    const res = await apiCall('PUT', '/candidates/' + id + '/status', { status: newStatus });
+    // Update local cache
+    const idx = candidates.findIndex(x => x.id === id);
+    if (idx >= 0) candidates[idx] = res.data;
+    saveLocal();
+  } catch {
+    // Fallback: update locally
+    const c = candidates.find(x => x.id === id);
+    if (!c || c.status === newStatus) return;
+    c.status = newStatus;
+    c.timeline.push({date: new Date().toISOString(), action: 'ステータス変更: ' + STATUS_LABELS[newStatus], note: ''});
+    saveLocal();
+  }
 
-  c.status = newStatus;
-  c.timeline.push({date: new Date().toISOString(), action: 'ステータス変更: ' + STATUS_LABELS[newStatus], note: ''});
-  save();
   openCandidate(id);
   refreshDashboard();
 }
 
 /* ═══════════════════ INIT ═══════════════════ */
-refreshDashboard();
-renderQuestions('doctor');
+(async function init() {
+  await syncFromServer();
+  refreshDashboard();
+  renderQuestions('doctor');
+})();
 </script>
 </body>
 </html>
