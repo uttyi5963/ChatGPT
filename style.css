@@ -276,7 +276,7 @@ button:focus {
 .controls-grid {
     display: grid;
     gap: 10px;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .list-header {
@@ -369,6 +369,30 @@ button:focus {
     color: #dcfce7;
     border-color: #14532d;
     background: rgba(20, 83, 45, 0.35);
+}
+
+.badge.importance-s {
+    color: #fee2e2;
+    border-color: #b91c1c;
+    background: rgba(185, 28, 28, 0.4);
+}
+
+.badge.importance-a {
+    color: #ffedd5;
+    border-color: #c2410c;
+    background: rgba(194, 65, 12, 0.35);
+}
+
+.badge.importance-b {
+    color: #fef3c7;
+    border-color: #92400e;
+    background: rgba(146, 64, 14, 0.32);
+}
+
+.badge.importance-c {
+    color: #dcfce7;
+    border-color: #166534;
+    background: rgba(22, 101, 52, 0.3);
 }
 
 .task-description {

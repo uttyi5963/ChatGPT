@@ -15,10 +15,24 @@ const PRIORITY_LABELS = {
     low: "低",
 };
 
+const IMPORTANCE_LABELS = {
+    s: "S",
+    a: "A",
+    b: "B",
+    c: "C",
+};
+
 const PRIORITY_WEIGHT = {
     high: 3,
     medium: 2,
     low: 1,
+};
+
+const IMPORTANCE_WEIGHT = {
+    s: 4,
+    a: 3,
+    b: 2,
+    c: 1,
 };
 
 const state = {
@@ -32,6 +46,7 @@ const state = {
         search: "",
         status: "all",
         priority: "all",
+        importance: "all",
         sortBy: "created_desc",
     },
 };
@@ -44,12 +59,14 @@ const elements = {
     taskDueDate: document.getElementById("task-due-date"),
     taskPriority: document.getElementById("task-priority"),
     taskStatus: document.getElementById("task-status"),
+    taskImportance: document.getElementById("task-importance"),
     taskCategory: document.getElementById("task-category"),
     saveButton: document.getElementById("save-task-btn"),
     resetButton: document.getElementById("reset-form-btn"),
     searchInput: document.getElementById("search-input"),
     filterStatus: document.getElementById("filter-status"),
     filterPriority: document.getElementById("filter-priority"),
+    filterImportance: document.getElementById("filter-importance"),
     sortBy: document.getElementById("sort-by"),
     taskList: document.getElementById("task-list"),
     emptyState: document.getElementById("empty-state"),
@@ -61,6 +78,7 @@ const elements = {
     completionText: document.getElementById("completion-text"),
     completionBar: document.getElementById("completion-bar"),
     priorityBreakdown: document.getElementById("priority-breakdown"),
+    importanceBreakdown: document.getElementById("importance-breakdown"),
     todayLabel: document.getElementById("today-label"),
     alertEnabled: document.getElementById("alert-enabled"),
     notificationPermissionButton: document.getElementById("notification-permission-btn"),
@@ -85,7 +103,11 @@ function loadTasks() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return [];
         const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map((task) => ({
+            ...task,
+            importance: isValidImportance(task.importance) ? task.importance : "b",
+        }));
     } catch (_error) {
         return [];
     }
@@ -148,6 +170,11 @@ function attachEventListeners() {
         renderTaskList();
     });
 
+    elements.filterImportance.addEventListener("change", (event) => {
+        state.filters.importance = event.target.value;
+        renderTaskList();
+    });
+
     elements.sortBy.addEventListener("change", (event) => {
         state.filters.sortBy = event.target.value;
         renderTaskList();
@@ -183,6 +210,7 @@ function handleSubmitTask(event) {
         dueDate: elements.taskDueDate.value || "",
         priority: elements.taskPriority.value,
         status: elements.taskStatus.value,
+        importance: elements.taskImportance.value,
         category: elements.taskCategory.value.trim(),
         createdAt: editingId ? undefined : now,
         updatedAt: now,
@@ -245,6 +273,7 @@ function beginEditTask(taskId) {
     elements.taskDueDate.value = task.dueDate || "";
     elements.taskPriority.value = task.priority;
     elements.taskStatus.value = task.status;
+    elements.taskImportance.value = isValidImportance(task.importance) ? task.importance : "b";
     elements.taskCategory.value = task.category || "";
     elements.saveButton.textContent = "更新する";
     elements.taskTitle.focus();
@@ -273,6 +302,7 @@ function resetForm() {
     elements.taskId.value = "";
     elements.taskPriority.value = "medium";
     elements.taskStatus.value = "todo";
+    elements.taskImportance.value = "b";
     elements.saveButton.textContent = "タスクを保存";
 }
 
@@ -310,6 +340,25 @@ function renderDashboard() {
         `高: ${counts.high}`,
         `中: ${counts.medium}`,
         `低: ${counts.low}`,
+    ]
+        .map((text) => `<li><span>${text.split(": ")[0]}</span><strong>${text.split(": ")[1]}</strong></li>`)
+        .join("");
+
+    const importanceCounts = {
+        s: 0,
+        a: 0,
+        b: 0,
+        c: 0,
+    };
+    state.tasks.forEach((task) => {
+        const rank = isValidImportance(task.importance) ? task.importance : "b";
+        importanceCounts[rank] += 1;
+    });
+    elements.importanceBreakdown.innerHTML = [
+        `S: ${importanceCounts.s}`,
+        `A: ${importanceCounts.a}`,
+        `B: ${importanceCounts.b}`,
+        `C: ${importanceCounts.c}`,
     ]
         .map((text) => `<li><span>${text.split(": ")[0]}</span><strong>${text.split(": ")[1]}</strong></li>`)
         .join("");
@@ -351,11 +400,13 @@ function getVisibleTasks() {
     const filtered = state.tasks.filter((task) => {
         const statusMatch = state.filters.status === "all" || task.status === state.filters.status;
         const priorityMatch = state.filters.priority === "all" || task.priority === state.filters.priority;
+        const importance = isValidImportance(task.importance) ? task.importance : "b";
+        const importanceMatch = state.filters.importance === "all" || importance === state.filters.importance;
 
         const searchable = `${task.title} ${task.description || ""} ${task.category || ""}`.toLowerCase();
         const searchMatch = !searchWord || searchable.includes(searchWord);
 
-        return statusMatch && priorityMatch && searchMatch;
+        return statusMatch && priorityMatch && importanceMatch && searchMatch;
     });
 
     const sortType = state.filters.sortBy;
@@ -376,6 +427,11 @@ function compareTasks(a, b, sortType) {
     if (sortType === "priority_desc") {
         return (PRIORITY_WEIGHT[b.priority] || 0) - (PRIORITY_WEIGHT[a.priority] || 0);
     }
+    if (sortType === "importance_desc") {
+        const bImportance = isValidImportance(b.importance) ? b.importance : "b";
+        const aImportance = isValidImportance(a.importance) ? a.importance : "b";
+        return (IMPORTANCE_WEIGHT[bImportance] || 0) - (IMPORTANCE_WEIGHT[aImportance] || 0);
+    }
     return (b.createdAt || 0) - (a.createdAt || 0);
 }
 
@@ -390,6 +446,7 @@ function renderTaskItem(task) {
     const dueInfo = getDueInfo(task);
     const dueClass = dueInfo.kind !== "normal" ? ` ${dueInfo.kind}` : "";
     const categoryText = task.category ? `カテゴリ: ${escapeHtml(task.category)}` : "カテゴリなし";
+    const importance = isValidImportance(task.importance) ? task.importance : "b";
 
     return `
         <li class="task-item ${escapeHtml(task.status)}" data-id="${escapeHtml(task.id)}">
@@ -398,6 +455,7 @@ function renderTaskItem(task) {
                     <h3 class="task-title">${escapeHtml(task.title)}</h3>
                     <div class="task-meta">
                         <span class="badge status-${escapeHtml(task.status)}">${escapeHtml(STATUS_LABELS[task.status] || task.status)}</span>
+                        <span class="badge importance-${escapeHtml(importance)}">重要度: ${escapeHtml(IMPORTANCE_LABELS[importance])}</span>
                         <span class="badge priority-${escapeHtml(task.priority)}">優先度: ${escapeHtml(PRIORITY_LABELS[task.priority] || task.priority)}</span>
                         <span class="badge">${categoryText}</span>
                     </div>
@@ -557,6 +615,10 @@ function getTodayLocalISO() {
     const now = new Date();
     const tzOffsetMs = now.getTimezoneOffset() * 60000;
     return new Date(now.getTime() - tzOffsetMs).toISOString().slice(0, 10);
+}
+
+function isValidImportance(value) {
+    return value === "s" || value === "a" || value === "b" || value === "c";
 }
 
 function escapeHtml(text) {
