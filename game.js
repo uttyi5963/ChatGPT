@@ -105,6 +105,7 @@ const elements = {
     completionBar: document.getElementById("completion-bar"),
     priorityBreakdown: document.getElementById("priority-breakdown"),
     importanceBreakdown: document.getElementById("importance-breakdown"),
+    memberStatsList: document.getElementById("member-stats-list"),
     todayLabel: document.getElementById("today-label"),
     alertEnabled: document.getElementById("alert-enabled"),
     notificationPermissionButton: document.getElementById("notification-permission-btn"),
@@ -318,7 +319,7 @@ function handleTeamSubmit(event) {
     saveOrganization();
     elements.teamNameInput.value = "";
     renderOrganizationSection();
-    renderTaskList();
+    renderDashboard();
 }
 
 function handleMemberSubmit(event) {
@@ -342,7 +343,7 @@ function handleMemberSubmit(event) {
     saveOrganization();
     elements.memberNameInput.value = "";
     renderOrganizationSection();
-    renderTaskList();
+    renderDashboard();
 }
 
 function handleTeamListClick(event) {
@@ -734,6 +735,43 @@ function renderDashboard() {
     ]
         .map((text) => `<li><span>${text.split(": ")[0]}</span><strong>${text.split(": ")[1]}</strong></li>`)
         .join("");
+
+    renderMemberStats();
+}
+
+function renderMemberStats() {
+    const members = state.organization.members.slice().sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    const items = members.map((member) => {
+        const memberTasks = state.tasks.filter((task) => task.memberId === member.id);
+        return createMemberStatItemHtml(member.name, getTeamName(member.teamId), memberTasks);
+    });
+
+    const unassignedTasks = state.tasks.filter((task) => !task.memberId);
+    if (unassignedTasks.length > 0) {
+        items.push(createMemberStatItemHtml("未割り当て", "", unassignedTasks));
+    }
+
+    elements.memberStatsList.innerHTML = items.length
+        ? items.join("")
+        : '<li class="member-stat-item"><p class="member-stat-values">メンバー登録後に集計が表示されます。</p></li>';
+}
+
+function createMemberStatItemHtml(name, teamName, tasks) {
+    const total = tasks.length;
+    const done = tasks.filter((task) => task.status === "done").length;
+    const doing = tasks.filter((task) => task.status === "doing").length;
+    const todo = tasks.filter((task) => task.status === "todo").length;
+    const completion = total === 0 ? 0 : Math.round((done / total) * 100);
+
+    return `
+        <li class="member-stat-item">
+            <div class="member-stat-head">
+                <span class="member-stat-name">${escapeHtml(name)}</span>
+                <span class="member-stat-team">${escapeHtml(teamName || "")}</span>
+            </div>
+            <p class="member-stat-values">全${total}件 / 未着手${todo}件 / 進行中${doing}件 / 完了${done}件 / 完了率${completion}%</p>
+        </li>
+    `;
 }
 
 function renderTaskList() {

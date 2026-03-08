@@ -293,6 +293,44 @@ button:focus {
     color: #cbd5e1;
 }
 
+.member-stats-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.member-stat-item {
+    border: 1px solid #475569;
+    border-radius: 10px;
+    padding: 9px 10px;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.member-stat-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: baseline;
+}
+
+.member-stat-name {
+    font-weight: 600;
+    color: #dbeafe;
+}
+
+.member-stat-team {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.member-stat-values {
+    margin-top: 5px;
+    font-size: 0.84rem;
+    color: #cbd5e1;
+}
+
 .alert-section {
     margin-top: 8px;
 }
