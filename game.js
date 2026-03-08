@@ -35,6 +35,12 @@ const IMPORTANCE_WEIGHT = {
     c: 1,
 };
 
+const STATUS_WEIGHT = {
+    todo: 1,
+    doing: 2,
+    done: 3,
+};
+
 const state = {
     tasks: [],
     activeDetailTaskId: null,
@@ -454,6 +460,12 @@ function compareTasks(a, b, sortType) {
     if (sortType === "created_asc") {
         return (a.createdAt || 0) - (b.createdAt || 0);
     }
+    if (sortType === "updated_desc") {
+        return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
+    }
+    if (sortType === "updated_asc") {
+        return (a.updatedAt || a.createdAt || 0) - (b.updatedAt || b.createdAt || 0);
+    }
     if (sortType === "due_asc") {
         return compareDueDate(a.dueDate, b.dueDate);
     }
@@ -467,6 +479,15 @@ function compareTasks(a, b, sortType) {
         const bImportance = isValidImportance(b.importance) ? b.importance : "b";
         const aImportance = isValidImportance(a.importance) ? a.importance : "b";
         return (IMPORTANCE_WEIGHT[bImportance] || 0) - (IMPORTANCE_WEIGHT[aImportance] || 0);
+    }
+    if (sortType === "status_asc") {
+        return (STATUS_WEIGHT[a.status] || 99) - (STATUS_WEIGHT[b.status] || 99);
+    }
+    if (sortType === "title_asc") {
+        return String(a.title || "").localeCompare(String(b.title || ""), "ja");
+    }
+    if (sortType === "title_desc") {
+        return String(b.title || "").localeCompare(String(a.title || ""), "ja");
     }
     return (b.createdAt || 0) - (a.createdAt || 0);
 }
