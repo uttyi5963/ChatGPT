@@ -1,4 +1,7 @@
 const STORAGE_KEY = "taskDashboard.tasks.v1";
+const SETTINGS_KEY = "taskDashboard.settings.v1";
+const ALERT_SENT_KEY = "taskDashboard.alerts.sent.v1";
+const ALERT_CHECK_INTERVAL_MS = 60 * 1000;
 
 const STATUS_LABELS = {
     todo: "未着手",
@@ -20,6 +23,11 @@ const PRIORITY_WEIGHT = {
 
 const state = {
     tasks: [],
+    settings: {
+        alertsEnabled: false,
+    },
+    alertSentMap: {},
+    alertTimerId: null,
     filters: {
         search: "",
         status: "all",
@@ -54,12 +62,20 @@ const elements = {
     completionBar: document.getElementById("completion-bar"),
     priorityBreakdown: document.getElementById("priority-breakdown"),
     todayLabel: document.getElementById("today-label"),
+    alertEnabled: document.getElementById("alert-enabled"),
+    notificationPermissionButton: document.getElementById("notification-permission-btn"),
+    alertPermissionText: document.getElementById("alert-permission-text"),
+    alertList: document.getElementById("alert-list"),
 };
 
 function boot() {
     state.tasks = loadTasks();
+    state.settings = loadSettings();
+    state.alertSentMap = loadAlertSentMap();
     renderTodayLabel();
     attachEventListeners();
+    syncAlertControls();
+    scheduleAlertCheck();
     resetForm();
     render();
 }
@@ -77,6 +93,40 @@ function loadTasks() {
 
 function saveTasks() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
+}
+
+function loadSettings() {
+    const defaults = { alertsEnabled: false };
+    try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (!raw) return defaults;
+        const parsed = JSON.parse(raw);
+        return {
+            ...defaults,
+            ...parsed,
+        };
+    } catch (_error) {
+        return defaults;
+    }
+}
+
+function saveSettings() {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+}
+
+function loadAlertSentMap() {
+    try {
+        const raw = localStorage.getItem(ALERT_SENT_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (_error) {
+        return {};
+    }
+}
+
+function saveAlertSentMap() {
+    localStorage.setItem(ALERT_SENT_KEY, JSON.stringify(state.alertSentMap));
 }
 
 function attachEventListeners() {
@@ -104,6 +154,15 @@ function attachEventListeners() {
     });
 
     elements.taskList.addEventListener("click", handleTaskListClick);
+
+    elements.alertEnabled.addEventListener("change", (event) => {
+        state.settings.alertsEnabled = event.target.checked;
+        saveSettings();
+        renderAlertPermissionText();
+        runAlertCheck();
+    });
+
+    elements.notificationPermissionButton.addEventListener("click", requestNotificationPermission);
 }
 
 function handleSubmitTask(event) {
@@ -219,7 +278,9 @@ function resetForm() {
 
 function render() {
     renderDashboard();
+    renderAlerts();
     renderTaskList();
+    runAlertCheck();
 }
 
 function renderDashboard() {
@@ -262,6 +323,26 @@ function renderTaskList() {
     elements.taskList.classList.toggle("hidden", filteredTasks.length === 0);
 
     elements.taskList.innerHTML = filteredTasks.map(renderTaskItem).join("");
+}
+
+function renderAlerts() {
+    const alertTasks = getAlertTasks();
+    const items = [];
+
+    if (alertTasks.length === 0) {
+        items.push('<li class="alert-item empty">現在、期限アラート対象のタスクはありません。</li>');
+    } else {
+        for (const task of alertTasks) {
+            const kind = getAlertKind(task);
+            const label = kind === "overdue" ? "期限切れ" : "本日期限";
+            items.push(
+                `<li class="alert-item ${kind}">[${label}] ${escapeHtml(task.title)}（期限: ${escapeHtml(task.dueDate)}）</li>`
+            );
+        }
+    }
+
+    elements.alertList.innerHTML = items.join("");
+    renderAlertPermissionText();
 }
 
 function getVisibleTasks() {
@@ -335,6 +416,115 @@ function renderTaskItem(task) {
 
 function isTaskOverdue(task) {
     return Boolean(task.dueDate) && task.status !== "done" && task.dueDate < getTodayLocalISO();
+}
+
+function getAlertTasks() {
+    const today = getTodayLocalISO();
+    return state.tasks
+        .filter((task) => task.status !== "done" && task.dueDate && task.dueDate <= today)
+        .sort((a, b) => compareDueDate(a.dueDate, b.dueDate));
+}
+
+function getAlertKind(task) {
+    return task.dueDate < getTodayLocalISO() ? "overdue" : "today";
+}
+
+function scheduleAlertCheck() {
+    if (state.alertTimerId) {
+        clearInterval(state.alertTimerId);
+    }
+    state.alertTimerId = setInterval(runAlertCheck, ALERT_CHECK_INTERVAL_MS);
+}
+
+function runAlertCheck() {
+    if (!state.settings.alertsEnabled) return;
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    const today = getTodayLocalISO();
+    const alertTasks = getAlertTasks();
+    let hasUpdate = false;
+
+    for (const task of alertTasks) {
+        const kind = getAlertKind(task);
+        const key = `${today}|${task.id}|${kind}|${task.dueDate}`;
+        if (state.alertSentMap[key]) continue;
+
+        notifyTaskAlert(task, kind);
+        state.alertSentMap[key] = Date.now();
+        hasUpdate = true;
+    }
+
+    if (hasUpdate) {
+        pruneAlertSentMap(today);
+        saveAlertSentMap();
+    }
+}
+
+function notifyTaskAlert(task, kind) {
+    const title = kind === "overdue" ? "期限切れタスクがあります" : "本日期限のタスクがあります";
+    const body = `${task.title}（期限: ${task.dueDate}）`;
+    const notification = new Notification(title, { body });
+    notification.onclick = () => window.focus();
+}
+
+function pruneAlertSentMap(todayIso) {
+    const nextMap = {};
+    for (const [key, value] of Object.entries(state.alertSentMap)) {
+        const day = key.split("|")[0];
+        if (day === todayIso) {
+            nextMap[key] = value;
+        }
+    }
+    state.alertSentMap = nextMap;
+}
+
+async function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+        renderAlertPermissionText();
+        return;
+    }
+    try {
+        await Notification.requestPermission();
+    } catch (_error) {
+        // ignore
+    }
+    renderAlertPermissionText();
+    runAlertCheck();
+}
+
+function syncAlertControls() {
+    elements.alertEnabled.checked = Boolean(state.settings.alertsEnabled);
+    renderAlertPermissionText();
+}
+
+function renderAlertPermissionText() {
+    if (!("Notification" in window)) {
+        elements.alertPermissionText.textContent = "このブラウザは通知に対応していません。";
+        elements.notificationPermissionButton.disabled = true;
+        return;
+    }
+
+    const permission = Notification.permission;
+    if (permission === "granted") {
+        elements.alertPermissionText.textContent = state.settings.alertsEnabled
+            ? "ブラウザ通知は有効です。期限切れ/本日期限タスクを通知します。"
+            : "通知は許可済みです。チェックをONにすると通知します。";
+        elements.notificationPermissionButton.textContent = "通知許可済み";
+        elements.notificationPermissionButton.disabled = true;
+        return;
+    }
+
+    if (permission === "denied") {
+        elements.alertPermissionText.textContent = "通知がブロックされています。ブラウザ設定から許可してください。";
+        elements.notificationPermissionButton.textContent = "通知がブロック中";
+        elements.notificationPermissionButton.disabled = true;
+        return;
+    }
+
+    elements.alertPermissionText.textContent = "通知を使うには「通知を許可」を押してください。";
+    elements.notificationPermissionButton.textContent = "通知を許可";
+    elements.notificationPermissionButton.disabled = false;
 }
 
 function getDueInfo(task) {

@@ -217,6 +217,62 @@ button:focus {
     color: #cbd5e1;
 }
 
+.alert-section {
+    margin-top: 8px;
+}
+
+.alert-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.inline-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.inline-check input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    accent-color: var(--accent);
+}
+
+.alert-list {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.alert-item {
+    border: 1px solid #475569;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 0.88rem;
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.alert-item.overdue {
+    border-color: #7f1d1d;
+    color: #fecaca;
+    background: rgba(127, 29, 29, 0.25);
+}
+
+.alert-item.today {
+    border-color: #92400e;
+    color: #fde68a;
+    background: rgba(146, 64, 14, 0.22);
+}
+
+.alert-item.empty {
+    color: #94a3b8;
+}
+
 .controls-grid {
     display: grid;
     gap: 10px;
@@ -391,6 +447,10 @@ button:focus {
 
     .form-actions {
         flex-direction: column;
+    }
+
+    .alert-controls .btn {
+        width: 100%;
     }
 
     .metric-grid {
