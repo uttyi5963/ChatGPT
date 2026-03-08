@@ -374,6 +374,64 @@
 
     .empty-state{text-align:center;padding:30px 16px;color:#aaa;font-size:13px;}
 
+    /* AI ANALYSIS */
+    .ai-section{margin-bottom:24px;}
+    .ai-section-title{font-family:'Noto Serif JP',serif;font-size:15px;font-weight:600;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--red-soft);display:flex;align-items:center;gap:8px;}
+    .ai-section-title .ai-icon{font-size:18px;}
+    .ai-score-ring{display:inline-flex;align-items:center;justify-content:center;width:80px;height:80px;border-radius:50%;border:4px solid var(--green);font-family:'DM Mono',monospace;font-size:28px;font-weight:700;color:var(--green);position:relative;}
+    .ai-score-ring.score-mid{border-color:var(--gold);color:var(--gold);}
+    .ai-score-ring.score-low{border-color:var(--red);color:var(--red);}
+    .ai-score-label{font-size:10px;color:#888;text-align:center;margin-top:4px;}
+    .ai-summary-box{background:var(--paper);border-radius:var(--radius);padding:16px 20px;font-size:14px;line-height:1.7;color:var(--ink);margin-bottom:16px;border-left:4px solid var(--teal);}
+    .ai-strength-card,.ai-risk-card{border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;position:relative;overflow:hidden;}
+    .ai-strength-card{border-left:4px solid var(--green);}
+    .ai-risk-card{border-left:4px solid var(--red);}
+    .ai-risk-card.sev-medium{border-left-color:var(--orange);}
+    .ai-risk-card.sev-low{border-left-color:var(--gold);}
+    .ai-card-title{font-size:14px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+    .ai-card-detail{font-size:13px;color:#555;line-height:1.5;}
+    .ai-score-inline{font-family:'DM Mono',monospace;font-size:11px;padding:2px 8px;border-radius:10px;background:var(--green-soft);color:var(--green);}
+    .ai-sev-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;text-transform:uppercase;}
+    .ai-sev-high{background:var(--red-soft);color:var(--red);}
+    .ai-sev-medium{background:var(--orange-soft);color:var(--orange);}
+    .ai-sev-low{background:var(--gold-soft);color:var(--gold);}
+    .ai-q-list{display:flex;flex-direction:column;gap:10px;}
+    .ai-q-item{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;}
+    .ai-q-text{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+    .ai-q-intent{font-size:12px;color:#888;}
+    .ai-cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px;}
+    .ai-cat-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center;}
+    .ai-cat-name{font-size:12px;font-weight:600;margin-bottom:6px;color:var(--ink);}
+    .ai-cat-score{font-family:'DM Mono',monospace;font-size:24px;font-weight:700;}
+    .ai-cat-bar{height:6px;background:var(--cream);border-radius:3px;margin-top:8px;overflow:hidden;}
+    .ai-cat-bar-fill{height:100%;border-radius:3px;transition:width .5s;}
+    .ai-quote{font-size:12px;color:#888;font-style:italic;padding:8px 12px;background:var(--paper);border-radius:var(--radius);margin-top:6px;border-left:3px solid var(--teal);}
+    .ai-verdict-box{background:var(--ink);border-radius:var(--radius-lg);padding:24px;color:#fff;display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:20px;}
+    .ai-verdict-score{font-family:'DM Mono',monospace;font-size:48px;font-weight:700;}
+    .ai-verdict-score span{font-size:16px;opacity:.4;}
+    .ai-verdict-label{display:inline-block;padding:5px 16px;border-radius:4px;font-size:13px;font-weight:700;letter-spacing:1px;}
+    .ai-verdict-pass{background:var(--green);}
+    .ai-verdict-review{background:var(--orange);}
+    .ai-verdict-fail{background:var(--red);}
+    .ai-retention-box{background:var(--paper);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
+    .ai-retention-level{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;padding:4px 12px;border-radius:20px;margin-bottom:8px;}
+    .ai-retention-low{background:var(--green-soft);color:var(--green);}
+    .ai-retention-medium{background:var(--orange-soft);color:var(--orange);}
+    .ai-retention-high{background:var(--red-soft);color:var(--red);}
+    .ai-signals{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
+    .ai-signal{font-size:12px;padding:4px 8px;border-radius:4px;}
+    .ai-signal-pos{background:var(--green-soft);color:var(--green);}
+    .ai-signal-neg{background:var(--red-soft);color:var(--red);}
+    .ai-loading{text-align:center;padding:40px;color:#888;}
+    .ai-loading .spinner{display:inline-block;width:32px;height:32px;border:3px solid var(--cream);border-top-color:var(--red);border-radius:50%;animation:ai-spin 1s linear infinite;margin-bottom:12px;}
+    @keyframes ai-spin{to{transform:rotate(360deg);}}
+    .ai-flags{display:flex;flex-direction:column;gap:8px;}
+    .ai-flag-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:#fff;}
+    .ai-flag-icon{font-size:16px;flex-shrink:0;margin-top:2px;}
+    .ai-flag-text{flex:1;}
+    .ai-flag-title{font-size:13px;font-weight:600;margin-bottom:2px;}
+    .ai-flag-detail{font-size:12px;color:#666;}
+
     /* PRINT */
     @media print{
       .header,.nav-btn,.btn,.filter-bar,.toast-container{display:none!important;}
@@ -396,6 +454,8 @@
     <button class="nav-btn" data-page="register">新規登録</button>
     <button class="nav-btn" data-page="questions">質問マスター</button>
     <button class="nav-btn" data-page="interview">面接評価</button>
+    <button class="nav-btn" data-page="ai-resume">AI履歴書分析</button>
+    <button class="nav-btn" data-page="ai-transcript">AI面接分析</button>
   </nav>
   <div class="api-status">
     <span class="api-dot" id="api-dot"></span>
@@ -723,6 +783,118 @@
   </div>
 </div>
 
+<!-- ═══════════════════ AI RESUME ANALYSIS ═══════════════════ -->
+<div class="page" id="page-ai-resume">
+  <div class="page-header">
+    <div class="page-title-block">
+      <h1 class="page-title">AI 履歴書分析</h1>
+      <p class="page-sub">履歴書をAIが分析し、強み・リスク・面接質問を提案します</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">分析対象 <span class="tag">INPUT</span></div>
+    <div class="form-row col2">
+      <div class="form-group">
+        <label>候補者を選択（任意）</label>
+        <select id="ai-resume-candidate">
+          <option value="">-- 候補者と紐付けない --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>職種</label>
+        <select id="ai-resume-job">
+          <option value="doctor">医師</option>
+          <option value="nurse">看護師</option>
+          <option value="clerk">事務</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>履歴書テキスト（コピー＆ペーストまたは入力）</label>
+      <textarea id="ai-resume-text" style="min-height:200px;" placeholder="履歴書の内容をここにペーストしてください...&#10;&#10;例:&#10;氏名: 田中太郎&#10;生年月日: 1985年4月1日&#10;学歴: 東京医科大学 2010年卒&#10;職歴:&#10;  2010-2015 〇〇病院 内科医&#10;  2015-2020 △△クリニック 院長&#10;  ..."></textarea>
+    </div>
+    <div class="form-row col2">
+      <div class="form-group">
+        <label>または テキストファイルをアップロード</label>
+        <div class="upload-zone" style="padding:14px;">
+          <input type="file" id="ai-resume-file" accept=".txt,.doc,.docx,.pdf" />
+          <div class="upload-txt" style="font-size:12px;">ファイルを選択</div>
+          <div class="upload-sub" style="font-size:11px;">TXT対応</div>
+        </div>
+      </div>
+      <div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-red" onclick="runResumeAnalysis()" id="ai-resume-btn">AI分析を実行</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="ai-resume-results" style="display:none;">
+    <div class="card">
+      <div class="card-title">分析結果 <span class="tag">AI RESULT</span></div>
+      <div id="ai-resume-results-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ AI TRANSCRIPT ANALYSIS ═══════════════════ -->
+<div class="page" id="page-ai-transcript">
+  <div class="page-header">
+    <div class="page-title-block">
+      <h1 class="page-title">AI 面接分析</h1>
+      <p class="page-sub">Google Meet の文字起こしをAIが分析し、面接結果を評価します</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">面接データ <span class="tag">INPUT</span></div>
+    <div class="form-row col2">
+      <div class="form-group">
+        <label>候補者を選択（任意）</label>
+        <select id="ai-transcript-candidate">
+          <option value="">-- 候補者と紐付けない --</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>職種</label>
+        <select id="ai-transcript-job">
+          <option value="doctor">医師</option>
+          <option value="nurse">看護師</option>
+          <option value="clerk">事務</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Google Meet 文字起こしテキスト</label>
+      <textarea id="ai-transcript-text" style="min-height:250px;" placeholder="Google Meet の文字起こし内容をここにペーストしてください...&#10;&#10;例:&#10;面接官: 本日はお越しいただきありがとうございます。まず自己紹介をお願いします。&#10;候補者: はい、田中太郎と申します。東京医科大学を卒業後...&#10;面接官: 当院の理念についてどうお考えですか？&#10;候補者: 患者様第一という理念に深く共感しています..."></textarea>
+    </div>
+    <div class="form-row col2">
+      <div class="form-group">
+        <label>またはテキストファイルをアップロード</label>
+        <div class="upload-zone" style="padding:14px;">
+          <input type="file" id="ai-transcript-file" accept=".txt,.vtt,.srt,.doc,.docx" />
+          <div class="upload-txt" style="font-size:12px;">ファイルを選択</div>
+          <div class="upload-sub" style="font-size:11px;">TXT / VTT / SRT 対応</div>
+        </div>
+      </div>
+      <div></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-red" onclick="runTranscriptAnalysis()" id="ai-transcript-btn">AI面接分析を実行</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="ai-transcript-results" style="display:none;">
+    <div class="card">
+      <div class="card-title">面接分析結果 <span class="tag">AI RESULT</span></div>
+      <div id="ai-transcript-results-body"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════ CANDIDATE DETAIL MODAL ═══════════════════ -->
 <div class="overlay" id="candidate-modal">
   <div class="modal">
@@ -902,6 +1074,7 @@ function showPage(pageId) {
   if (pageId === 'candidates') refreshCandidates();
   if (pageId === 'questions') renderQuestions('doctor');
   if (pageId === 'interview') refreshInterviewSelect();
+  if (pageId === 'ai-resume' || pageId === 'ai-transcript') refreshAiCandidateSelects();
 }
 
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -1582,7 +1755,36 @@ async function openCandidate(id) {
     (c.notes ? '<div class="form-group"><label>備考</label><div style="padding:9px 0;font-size:13px;color:#666;">' + escHtml(c.notes) + '</div></div>' : '') +
     (c.resumeOriginal ? '<div class="form-group"><label>履歴書</label><div style="padding:9px 0;"><a href="/api/candidates/' + c.id + '/resume" class="btn btn-ghost btn-xs" target="_blank">&#128196; ' + escHtml(c.resumeOriginal) + ' をダウンロード</a></div></div>' : '') +
 
-    scoreHtml +
+    scoreHtml;
+
+  // AI Analysis results in modal
+  let aiHtml = '';
+  if (c.resumeAnalysis || c.transcriptAnalysis) {
+    aiHtml += '<div class="section-divider">AI分析結果</div>';
+    if (c.resumeAnalysis && !c.resumeAnalysis.parseError) {
+      const ra = c.resumeAnalysis;
+      aiHtml += '<div style="margin-bottom:14px;padding:12px;background:var(--paper);border-radius:var(--radius);border-left:4px solid var(--teal);">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--teal);margin-bottom:6px;">AI履歴書分析</div>' +
+        '<div style="font-size:13px;margin-bottom:6px;">' + escHtml(ra.summary || '') + '</div>' +
+        '<div style="display:flex;gap:12px;flex-wrap:wrap;">' +
+        '<span style="font-family:\'DM Mono\',monospace;font-size:13px;">総合: <strong>' + (ra.overallScore || '--') + '/100</strong></span>' +
+        (ra.retentionRisk ? '<span class="ai-sev-badge ai-sev-' + ra.retentionRisk.level + '">離職リスク: ' + (ra.retentionRisk.level === 'high' ? '高' : ra.retentionRisk.level === 'medium' ? '中' : '低') + '</span>' : '') +
+        '</div></div>';
+    }
+    if (c.transcriptAnalysis && !c.transcriptAnalysis.parseError) {
+      const ta = c.transcriptAnalysis;
+      aiHtml += '<div style="margin-bottom:14px;padding:12px;background:var(--paper);border-radius:var(--radius);border-left:4px solid var(--green);">' +
+        '<div style="font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px;">AI面接分析</div>' +
+        '<div style="font-size:13px;margin-bottom:6px;">' + escHtml(ta.summary || '') + '</div>' +
+        '<div style="display:flex;gap:12px;flex-wrap:wrap;">' +
+        '<span style="font-family:\'DM Mono\',monospace;font-size:13px;">総合: <strong>' + (ta.totalScore || '--') + '/' + (ta.maxTotalScore || 100) + '</strong></span>' +
+        '<span class="ai-verdict-label ' + (ta.verdict === '合格' ? 'ai-verdict-pass' : ta.verdict === '不合格' ? 'ai-verdict-fail' : 'ai-verdict-review') + '" style="font-size:11px;padding:2px 10px;">' + (ta.verdict || '--') + '</span>' +
+        (ta.retentionPrediction ? '<span class="ai-sev-badge ai-sev-' + ta.retentionPrediction.risk + '">離職リスク: ' + (ta.retentionPrediction.risk === 'high' ? '高' : ta.retentionPrediction.risk === 'medium' ? '中' : '低') + '</span>' : '') +
+        '</div></div>';
+    }
+  }
+
+  body.innerHTML += aiHtml +
     timelineHtml +
 
     '<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);text-align:right;">' +
@@ -1637,6 +1839,333 @@ async function deleteCandidate(id) {
   closeModal();
   showToast(c.name + ' さんを削除しました。', 'info');
   refreshDashboard();
+}
+
+/* ═══════════════════ AI RESUME ANALYSIS ═══════════════════ */
+function refreshAiCandidateSelects() {
+  ['ai-resume-candidate', 'ai-transcript-candidate'].forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    const val = sel.value;
+    sel.innerHTML = '<option value="">-- 候補者と紐付けない --</option>' +
+      candidates.map(c =>
+        '<option value="' + c.id + '">' + escHtml(c.name) + ' (' + JOB_LABELS[c.job] + ')</option>'
+      ).join('');
+    sel.value = val;
+  });
+}
+
+// Auto-fill job when candidate selected
+['ai-resume', 'ai-transcript'].forEach(prefix => {
+  document.getElementById(prefix + '-candidate').addEventListener('change', function() {
+    const c = candidates.find(x => x.id === this.value);
+    if (c) document.getElementById(prefix + '-job').value = c.job;
+  });
+});
+
+// File upload readers
+document.getElementById('ai-resume-file').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (file.name.endsWith('.txt')) {
+    const reader = new FileReader();
+    reader.onload = function() { document.getElementById('ai-resume-text').value = reader.result; };
+    reader.readAsText(file);
+  } else {
+    showToast('テキストファイル(.txt)のみ直接読み込み可能です。それ以外はテキストをコピー＆ペーストしてください。', 'warning');
+  }
+});
+document.getElementById('ai-transcript-file').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (['txt','vtt','srt'].includes(ext)) {
+    const reader = new FileReader();
+    reader.onload = function() { document.getElementById('ai-transcript-text').value = reader.result; };
+    reader.readAsText(file);
+  } else {
+    showToast('テキストファイル(.txt/.vtt/.srt)のみ直接読み込み可能です。', 'warning');
+  }
+});
+
+async function runResumeAnalysis() {
+  const text = document.getElementById('ai-resume-text').value.trim();
+  if (!text) { showToast('履歴書テキストを入力してください。', 'warning'); return; }
+
+  const candidateId = document.getElementById('ai-resume-candidate').value;
+  const job = document.getElementById('ai-resume-job').value;
+  const c = candidateId ? candidates.find(x => x.id === candidateId) : null;
+
+  const btn = document.getElementById('ai-resume-btn');
+  btn.disabled = true;
+  btn.textContent = '分析中...';
+
+  const resultsDiv = document.getElementById('ai-resume-results');
+  resultsDiv.style.display = 'block';
+  document.getElementById('ai-resume-results-body').innerHTML =
+    '<div class="ai-loading"><div class="spinner"></div><div>AIが履歴書を分析しています...</div><div style="font-size:12px;margin-top:6px;color:#aaa;">通常30〜60秒かかります</div></div>';
+
+  try {
+    const res = await apiCall('POST', '/ai/resume-analyze', {
+      candidateId: candidateId || null,
+      resumeText: text,
+      candidateName: c ? c.name : '',
+      job: job
+    });
+    renderResumeResults(res.data);
+    showToast('AI履歴書分析が完了しました。', 'success');
+    if (candidateId) await syncFromServer();
+  } catch (err) {
+    document.getElementById('ai-resume-results-body').innerHTML =
+      '<div class="empty-state" style="color:var(--red);">分析に失敗しました: ' + escHtml(err.message || 'サーバーエラー') + '</div>';
+    showToast('AI分析に失敗しました。', 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'AI分析を実行';
+}
+
+function renderResumeResults(data) {
+  if (data.parseError) {
+    document.getElementById('ai-resume-results-body').innerHTML =
+      '<div class="ai-summary-box">' + escHtml(data.raw) + '</div>';
+    return;
+  }
+
+  const scoreClass = data.overallScore >= 70 ? '' : data.overallScore >= 50 ? 'score-mid' : 'score-low';
+
+  let html = '';
+
+  // Score + Summary
+  html += '<div style="display:flex;align-items:center;gap:24px;margin-bottom:20px;flex-wrap:wrap;">' +
+    '<div style="text-align:center;"><div class="ai-score-ring ' + scoreClass + '">' + (data.overallScore || '--') + '</div><div class="ai-score-label">総合スコア / 100</div></div>' +
+    '<div style="flex:1;min-width:250px;"><div class="ai-summary-box">' + escHtml(data.summary || '') + '</div>' +
+    '<div style="font-size:14px;font-weight:600;">' + escHtml(data.recommendation || '') + '</div></div></div>';
+
+  // Strengths
+  if (data.strengths && data.strengths.length) {
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#9733;</span> 強み</div>';
+    data.strengths.forEach(s => {
+      html += '<div class="ai-strength-card"><div class="ai-card-title">' + escHtml(s.title) +
+        (s.score ? ' <span class="ai-score-inline">' + s.score + '/5</span>' : '') +
+        '</div><div class="ai-card-detail">' + escHtml(s.detail) + '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // Risks
+  if (data.risks && data.risks.length) {
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#9888;</span> リスク要因</div>';
+    data.risks.forEach(r => {
+      const sevCls = r.severity === 'high' ? '' : r.severity === 'medium' ? 'sev-medium' : 'sev-low';
+      const sevLabel = r.severity === 'high' ? '高' : r.severity === 'medium' ? '中' : '低';
+      html += '<div class="ai-risk-card ' + sevCls + '"><div class="ai-card-title">' + escHtml(r.title) +
+        ' <span class="ai-sev-badge ai-sev-' + r.severity + '">' + sevLabel + '</span>' +
+        '</div><div class="ai-card-detail">' + escHtml(r.detail) + '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  // Retention Risk
+  if (data.retentionRisk) {
+    const rr = data.retentionRisk;
+    const retCls = rr.level === 'high' ? 'ai-retention-high' : rr.level === 'medium' ? 'ai-retention-medium' : 'ai-retention-low';
+    const retLabel = rr.level === 'high' ? '離職リスク: 高' : rr.level === 'medium' ? '離職リスク: 中' : '離職リスク: 低';
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#128100;</span> 定着予測</div>' +
+      '<div class="ai-retention-box"><div class="ai-retention-level ' + retCls + '">' + retLabel + '</div>' +
+      '<div class="ai-card-detail">' + escHtml(rr.reason) + '</div></div></div>';
+  }
+
+  // Philosophy Fit
+  if (data.philosophyFit) {
+    const pf = data.philosophyFit;
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#127969;</span> 理念適合性</div>' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">' +
+      '<div class="ai-score-ring" style="width:50px;height:50px;font-size:18px;border-width:3px;' +
+      (pf.score >= 4 ? '' : pf.score >= 3 ? 'border-color:var(--gold);color:var(--gold);' : 'border-color:var(--red);color:var(--red);') +
+      '">' + pf.score + '/5</div>' +
+      '<div class="ai-card-detail" style="flex:1;">' + escHtml(pf.comment) + '</div></div></div>';
+  }
+
+  // Suggested Questions
+  if (data.suggestedQuestions && data.suggestedQuestions.length) {
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#128172;</span> 面接推奨質問</div><div class="ai-q-list">';
+    data.suggestedQuestions.forEach((q, i) => {
+      html += '<div class="ai-q-item"><div class="ai-q-text">Q' + (i+1) + '. ' + escHtml(q.question) + '</div>' +
+        '<div class="ai-q-intent">確認ポイント: ' + escHtml(q.intent) + '</div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  document.getElementById('ai-resume-results-body').innerHTML = html;
+}
+
+/* ═══════════════════ AI TRANSCRIPT ANALYSIS ═══════════════════ */
+async function runTranscriptAnalysis() {
+  const text = document.getElementById('ai-transcript-text').value.trim();
+  if (!text) { showToast('文字起こしテキストを入力してください。', 'warning'); return; }
+
+  const candidateId = document.getElementById('ai-transcript-candidate').value;
+  const job = document.getElementById('ai-transcript-job').value;
+  const c = candidateId ? candidates.find(x => x.id === candidateId) : null;
+
+  const btn = document.getElementById('ai-transcript-btn');
+  btn.disabled = true;
+  btn.textContent = '分析中...';
+
+  const resultsDiv = document.getElementById('ai-transcript-results');
+  resultsDiv.style.display = 'block';
+  document.getElementById('ai-transcript-results-body').innerHTML =
+    '<div class="ai-loading"><div class="spinner"></div><div>AIが面接内容を分析しています...</div><div style="font-size:12px;margin-top:6px;color:#aaa;">通常30〜90秒かかります</div></div>';
+
+  try {
+    const res = await apiCall('POST', '/ai/transcript-analyze', {
+      candidateId: candidateId || null,
+      transcript: text,
+      candidateName: c ? c.name : '',
+      job: job
+    });
+    renderTranscriptResults(res.data);
+    showToast('AI面接分析が完了しました。', 'success');
+    if (candidateId) await syncFromServer();
+  } catch (err) {
+    document.getElementById('ai-transcript-results-body').innerHTML =
+      '<div class="empty-state" style="color:var(--red);">分析に失敗しました: ' + escHtml(err.message || 'サーバーエラー') + '</div>';
+    showToast('AI分析に失敗しました。', 'error');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'AI面接分析を実行';
+}
+
+function renderTranscriptResults(data) {
+  if (data.parseError) {
+    document.getElementById('ai-transcript-results-body').innerHTML =
+      '<div class="ai-summary-box">' + escHtml(data.raw) + '</div>';
+    return;
+  }
+
+  let html = '';
+
+  // Verdict Bar
+  const verdictCls = data.verdict === '合格' ? 'ai-verdict-pass' : data.verdict === '不合格' ? 'ai-verdict-fail' : 'ai-verdict-review';
+  html += '<div class="ai-verdict-box">' +
+    '<div><div style="font-size:12px;opacity:.6;margin-bottom:4px;">総合評価</div>' +
+    '<div class="ai-verdict-score">' + (data.totalScore || 0) + '<span>/' + (data.maxTotalScore || 100) + '</span></div></div>' +
+    '<div style="flex:1;min-width:200px;"><div class="ai-verdict-label ' + verdictCls + '">' + (data.verdict || '--') + '</div>' +
+    '<div style="font-size:13px;margin-top:8px;opacity:.8;line-height:1.5;">' + escHtml(data.verdictReason || '') + '</div></div></div>';
+
+  // Summary
+  html += '<div class="ai-summary-box" style="margin-top:20px;">' + escHtml(data.summary || '') + '</div>';
+
+  // Category Scores
+  if (data.categories && data.categories.length) {
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#128202;</span> カテゴリ別評価</div><div class="ai-cat-grid">';
+    data.categories.forEach(cat => {
+      const pct = cat.maxScore > 0 ? (cat.score / cat.maxScore * 100) : 0;
+      const color = pct >= 80 ? 'var(--green)' : pct >= 60 ? 'var(--gold)' : 'var(--red)';
+      html += '<div class="ai-cat-card"><div class="ai-cat-name">' + escHtml(cat.name) + '</div>' +
+        '<div class="ai-cat-score" style="color:' + color + ';">' + cat.score + '<span style="font-size:12px;color:#aaa;">/' + cat.maxScore + '</span></div>' +
+        '<div class="ai-cat-bar"><div class="ai-cat-bar-fill" style="width:' + pct + '%;background:' + color + ';"></div></div></div>';
+    });
+    html += '</div>';
+
+    // Detailed findings
+    data.categories.forEach(cat => {
+      html += '<div style="margin-bottom:14px;">' +
+        '<div style="font-size:13px;font-weight:600;margin-bottom:4px;">' + escHtml(cat.name) + '</div>' +
+        '<div class="ai-card-detail">' + escHtml(cat.findings) + '</div>';
+      if (cat.quotes && cat.quotes.length) {
+        cat.quotes.forEach(q => {
+          html += '<div class="ai-quote">&ldquo;' + escHtml(q) + '&rdquo;</div>';
+        });
+      }
+      html += '</div>';
+    });
+  }
+
+  // Philosophy Alignment
+  if (data.philosophyAlignment) {
+    const pa = data.philosophyAlignment;
+    const paPct = pa.maxScore > 0 ? (pa.score / pa.maxScore * 100) : 0;
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#127969;</span> 理念との整合性</div>' +
+      '<div style="display:flex;align-items:center;gap:16px;margin-bottom:10px;">' +
+      '<div class="ai-score-ring" style="width:60px;height:60px;font-size:20px;border-width:3px;' +
+      (paPct >= 70 ? '' : paPct >= 50 ? 'border-color:var(--gold);color:var(--gold);' : 'border-color:var(--red);color:var(--red);') +
+      '">' + pa.score + '/' + pa.maxScore + '</div>' +
+      '<div class="ai-card-detail" style="flex:1;">' + escHtml(pa.detail) + '</div></div></div>';
+  }
+
+  // Retention Prediction
+  if (data.retentionPrediction) {
+    const rp = data.retentionPrediction;
+    const retCls = rp.risk === 'high' ? 'ai-retention-high' : rp.risk === 'medium' ? 'ai-retention-medium' : 'ai-retention-low';
+    const retLabel = rp.risk === 'high' ? '離職リスク: 高' : rp.risk === 'medium' ? '離職リスク: 中' : '離職リスク: 低';
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#128100;</span> 定着予測（辞めないか）</div>' +
+      '<div class="ai-retention-box"><div class="ai-retention-level ' + retCls + '">' + retLabel + '</div>' +
+      '<div class="ai-card-detail" style="margin-bottom:10px;">' + escHtml(rp.detail) + '</div>';
+    if (rp.positiveSignals && rp.positiveSignals.length) {
+      html += '<div class="ai-signals">';
+      rp.positiveSignals.forEach(s => { html += '<div class="ai-signal ai-signal-pos">+ ' + escHtml(s) + '</div>'; });
+      html += '</div>';
+    }
+    if (rp.warningSignals && rp.warningSignals.length) {
+      html += '<div class="ai-signals" style="margin-top:6px;">';
+      rp.warningSignals.forEach(s => { html += '<div class="ai-signal ai-signal-neg">- ' + escHtml(s) + '</div>'; });
+      html += '</div>';
+    }
+    html += '</div></div>';
+  }
+
+  // Organization Benefit
+  if (data.organizationBenefit) {
+    const ob = data.organizationBenefit;
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#127942;</span> 法人への貢献度</div>' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">' +
+      '<div class="ai-score-ring" style="width:50px;height:50px;font-size:16px;border-width:3px;' +
+      (ob.score >= 7 ? '' : ob.score >= 5 ? 'border-color:var(--gold);color:var(--gold);' : 'border-color:var(--red);color:var(--red);') +
+      '">' + ob.score + '/' + ob.maxScore + '</div>' +
+      '<div class="ai-card-detail" style="flex:1;">' + escHtml(ob.detail) + '</div></div>';
+    if (ob.contributions && ob.contributions.length) {
+      html += '<ul style="margin-top:6px;padding-left:20px;font-size:13px;color:#555;">';
+      ob.contributions.forEach(c => { html += '<li>' + escHtml(c) + '</li>'; });
+      html += '</ul>';
+    }
+    html += '</div>';
+  }
+
+  // Communication Skills
+  if (data.communicationSkills) {
+    const cs = data.communicationSkills;
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#128483;</span> コミュニケーション力</div>' +
+      '<div style="display:flex;align-items:center;gap:12px;">' +
+      '<div class="ai-score-ring" style="width:50px;height:50px;font-size:16px;border-width:3px;' +
+      (cs.score >= 4 ? '' : cs.score >= 3 ? 'border-color:var(--gold);color:var(--gold);' : 'border-color:var(--red);color:var(--red);') +
+      '">' + cs.score + '/' + cs.maxScore + '</div>' +
+      '<div class="ai-card-detail" style="flex:1;">' + escHtml(cs.detail) + '</div></div></div>';
+  }
+
+  // Red Flags
+  if (data.redFlags && data.redFlags.length) {
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#128680;</span> 懸念事項</div><div class="ai-flags">';
+    data.redFlags.forEach(rf => {
+      const sevIcon = rf.severity === 'high' ? '&#9888;' : rf.severity === 'medium' ? '&#9888;' : '&#8505;';
+      html += '<div class="ai-flag-item"><div class="ai-flag-icon">' + sevIcon + '</div><div class="ai-flag-text">' +
+        '<div class="ai-flag-title">' + escHtml(rf.flag) + ' <span class="ai-sev-badge ai-sev-' + rf.severity + '">' +
+        (rf.severity === 'high' ? '高' : rf.severity === 'medium' ? '中' : '低') + '</span></div>' +
+        '<div class="ai-flag-detail">' + escHtml(rf.detail) + '</div></div></div>';
+    });
+    html += '</div></div>';
+  }
+
+  // Follow-up Actions
+  if (data.followUpActions && data.followUpActions.length) {
+    html += '<div class="ai-section"><div class="ai-section-title"><span class="ai-icon">&#9989;</span> 今後のアクション</div><ul style="padding-left:20px;font-size:13px;color:#555;">';
+    data.followUpActions.forEach(a => { html += '<li style="margin-bottom:4px;">' + escHtml(a) + '</li>'; });
+    html += '</ul></div>';
+  }
+
+  document.getElementById('ai-transcript-results-body').innerHTML = html;
 }
 
 /* ═══════════════════ CSV EXPORT ═══════════════════ */

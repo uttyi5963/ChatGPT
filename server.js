@@ -3,11 +3,37 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const Anthropic = require('@anthropic-ai/sdk');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'candidates.json');
 const UPLOADS_DIR = path.join(__dirname, 'data', 'uploads');
+const AI_RESULTS_DIR = path.join(__dirname, 'data', 'ai-results');
+
+// Initialize Anthropic client
+const anthropic = new Anthropic();
+
+// Multer for transcript uploads
+const transcriptStorage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    cb(null, UPLOADS_DIR);
+  },
+  filename: function(req, file, cb) {
+    cb(null, 'transcript_' + Date.now() + path.extname(file.originalname));
+  }
+});
+const transcriptUpload = multer({
+  storage: transcriptStorage,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: function(req, file, cb) {
+    const allowed = ['.txt', '.doc', '.docx', '.pdf', '.vtt', '.srt'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) cb(null, true);
+    else cb(new Error('許可されていないファイル形式です'));
+  }
+});
 
 // Multer setup for file uploads
 const storage = multer.diskStorage({
@@ -300,6 +326,278 @@ app.get('/api/stats', (req, res) => {
       }
     }
   });
+});
+
+// ═══════════════════ AI ANALYSIS ENDPOINTS ═══════════════════
+
+// Ensure AI results directory exists
+function ensureAiDir() {
+  if (!fs.existsSync(AI_RESULTS_DIR)) fs.mkdirSync(AI_RESULTS_DIR, { recursive: true });
+}
+
+// POST /api/ai/resume-analyze — AI analysis of resume text
+app.post('/api/ai/resume-analyze', async (req, res) => {
+  const { candidateId, resumeText, candidateName, job } = req.body;
+  if (!resumeText || !resumeText.trim()) {
+    return res.status(400).json({ success: false, error: '履歴書テキストが必要です' });
+  }
+
+  const JOB_JP = { doctor: '医師', nurse: '看護師', clerk: '医療事務' };
+  const jobLabel = JOB_JP[job] || '医療従事者';
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4000,
+      messages: [{
+        role: 'user',
+        content: `あなたは医療法人の採用コンサルタントです。以下の履歴書テキストを分析し、JSON形式で結果を返してください。
+
+応募職種: ${jobLabel}
+候補者名: ${candidateName || '不明'}
+
+【履歴書テキスト】
+${resumeText}
+
+以下のJSON形式で回答してください（日本語で）:
+{
+  "summary": "候補者の概要（2-3文）",
+  "strengths": [
+    {"title": "強み1のタイトル", "detail": "具体的な説明", "score": 5},
+    {"title": "強み2のタイトル", "detail": "具体的な説明", "score": 4}
+  ],
+  "risks": [
+    {"title": "リスク1のタイトル", "detail": "具体的な説明", "severity": "high|medium|low"},
+    {"title": "リスク2のタイトル", "detail": "具体的な説明", "severity": "high|medium|low"}
+  ],
+  "retentionRisk": {
+    "level": "high|medium|low",
+    "reason": "離職リスクの根拠（転職回数、在籍期間パターンなど）"
+  },
+  "philosophyFit": {
+    "score": 4,
+    "comment": "医療理念との適合性コメント"
+  },
+  "suggestedQuestions": [
+    {"question": "面接で確認すべき質問1", "intent": "この質問で確認したいポイント"},
+    {"question": "面接で確認すべき質問2", "intent": "この質問で確認したいポイント"},
+    {"question": "面接で確認すべき質問3", "intent": "この質問で確認したいポイント"},
+    {"question": "面接で確認すべき質問4", "intent": "この質問で確認したいポイント"},
+    {"question": "面接で確認すべき質問5", "intent": "この質問で確認したいポイント"}
+  ],
+  "overallScore": 75,
+  "recommendation": "採用推奨度コメント（合格/要検討/不推奨）"
+}
+
+必ず有効なJSONのみを返してください。マークダウンやコードブロックは不要です。`
+      }]
+    });
+
+    const responseText = message.content[0].text.trim();
+    let analysis;
+    try {
+      // Try to parse, strip markdown code fences if present
+      const cleaned = responseText.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+      analysis = JSON.parse(cleaned);
+    } catch {
+      analysis = { raw: responseText, parseError: true };
+    }
+
+    // Save result
+    if (candidateId) {
+      ensureAiDir();
+      const resultFile = path.join(AI_RESULTS_DIR, candidateId + '_resume.json');
+      const result = { ...analysis, analyzedAt: new Date().toISOString(), candidateId };
+      fs.writeFileSync(resultFile, JSON.stringify(result, null, 2), 'utf-8');
+
+      // Update candidate timeline
+      const candidates = readCandidates();
+      const candidate = candidates.find(c => c.id === candidateId);
+      if (candidate) {
+        candidate.resumeAnalysis = result;
+        candidate.timeline.push({
+          date: new Date().toISOString(),
+          action: 'AI履歴書分析完了',
+          note: '総合スコア: ' + (analysis.overallScore || '--') + '/100'
+        });
+        writeCandidates(candidates);
+      }
+    }
+
+    res.json({ success: true, data: analysis });
+  } catch (err) {
+    console.error('AI Resume Analysis Error:', err.message);
+    res.status(500).json({ success: false, error: 'AI分析に失敗しました: ' + err.message });
+  }
+});
+
+// POST /api/ai/transcript-analyze — AI analysis of interview transcript
+app.post('/api/ai/transcript-analyze', async (req, res) => {
+  const { candidateId, transcript, candidateName, job } = req.body;
+  if (!transcript || !transcript.trim()) {
+    return res.status(400).json({ success: false, error: '文字起こしテキストが必要です' });
+  }
+
+  const JOB_JP = { doctor: '医師', nurse: '看護師', clerk: '医療事務' };
+  const jobLabel = JOB_JP[job] || '医療従事者';
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 5000,
+      messages: [{
+        role: 'user',
+        content: `あなたは医療法人の採用面接の専門評価者です。以下のGoogle Meet面接の文字起こしを分析し、JSON形式で詳細な評価結果を返してください。
+
+応募職種: ${jobLabel}
+候補者名: ${candidateName || '不明'}
+
+【面接文字起こし】
+${transcript}
+
+以下のJSON形式で回答してください（日本語で）:
+{
+  "summary": "面接全体の概要（3-4文）",
+  "categories": [
+    {
+      "name": "理念・価値観",
+      "score": 5,
+      "maxScore": 5,
+      "findings": "この分野での候補者の回答内容と評価理由",
+      "quotes": ["関連する発言の引用"]
+    },
+    {
+      "name": "患者対応・ケア",
+      "score": 4,
+      "maxScore": 5,
+      "findings": "この分野での候補者の回答内容と評価理由",
+      "quotes": ["関連する発言の引用"]
+    },
+    {
+      "name": "チームワーク",
+      "score": 4,
+      "maxScore": 5,
+      "findings": "この分野での候補者の回答内容と評価理由",
+      "quotes": ["関連する発言の引用"]
+    },
+    {
+      "name": "成長意欲",
+      "score": 3,
+      "maxScore": 5,
+      "findings": "この分野での候補者の回答内容と評価理由",
+      "quotes": ["関連する発言の引用"]
+    },
+    {
+      "name": "専門性・スキル",
+      "score": 4,
+      "maxScore": 5,
+      "findings": "この分野での候補者の回答内容と評価理由",
+      "quotes": ["関連する発言の引用"]
+    }
+  ],
+  "philosophyAlignment": {
+    "score": 8,
+    "maxScore": 10,
+    "detail": "法人理念との整合性について詳しく分析"
+  },
+  "retentionPrediction": {
+    "risk": "low|medium|high",
+    "detail": "この候補者が長期間働き続ける可能性について分析。面接の中で見られた定着に関する兆候",
+    "positiveSignals": ["定着に繋がるポジティブな発言や態度"],
+    "warningSignals": ["離職リスクを示唆する発言や態度"]
+  },
+  "organizationBenefit": {
+    "score": 8,
+    "maxScore": 10,
+    "detail": "この候補者が法人にもたらす具体的なプラスの効果",
+    "contributions": ["具体的な貢献ポイント"]
+  },
+  "communicationSkills": {
+    "score": 4,
+    "maxScore": 5,
+    "detail": "コミュニケーション能力の評価"
+  },
+  "redFlags": [
+    {"flag": "懸念点の内容", "severity": "high|medium|low", "detail": "具体的な説明"}
+  ],
+  "totalScore": 82,
+  "maxTotalScore": 100,
+  "verdict": "合格|要検討|不合格",
+  "verdictReason": "最終判定の理由（3-4文）",
+  "followUpActions": ["今後のアクション1", "今後のアクション2"]
+}
+
+必ず有効なJSONのみを返してください。マークダウンやコードブロックは不要です。`
+      }]
+    });
+
+    const responseText = message.content[0].text.trim();
+    let analysis;
+    try {
+      const cleaned = responseText.replace(/^```json?\s*/i, '').replace(/\s*```$/i, '').trim();
+      analysis = JSON.parse(cleaned);
+    } catch {
+      analysis = { raw: responseText, parseError: true };
+    }
+
+    // Save result
+    if (candidateId) {
+      ensureAiDir();
+      const resultFile = path.join(AI_RESULTS_DIR, candidateId + '_transcript.json');
+      const result = { ...analysis, analyzedAt: new Date().toISOString(), candidateId };
+      fs.writeFileSync(resultFile, JSON.stringify(result, null, 2), 'utf-8');
+
+      // Update candidate
+      const candidates = readCandidates();
+      const candidate = candidates.find(c => c.id === candidateId);
+      if (candidate) {
+        candidate.transcriptAnalysis = result;
+        candidate.timeline.push({
+          date: new Date().toISOString(),
+          action: 'AI面接分析完了',
+          note: '総合スコア: ' + (analysis.totalScore || '--') + '/' + (analysis.maxTotalScore || 100)
+        });
+        writeCandidates(candidates);
+      }
+    }
+
+    res.json({ success: true, data: analysis });
+  } catch (err) {
+    console.error('AI Transcript Analysis Error:', err.message);
+    res.status(500).json({ success: false, error: 'AI分析に失敗しました: ' + err.message });
+  }
+});
+
+// GET /api/ai/results/:candidateId — get AI analysis results for a candidate
+app.get('/api/ai/results/:candidateId', (req, res) => {
+  const candidates = readCandidates();
+  const candidate = candidates.find(c => c.id === req.params.candidateId);
+  if (!candidate) {
+    return res.status(404).json({ success: false, error: '候補者が見つかりません' });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      resumeAnalysis: candidate.resumeAnalysis || null,
+      transcriptAnalysis: candidate.transcriptAnalysis || null
+    }
+  });
+});
+
+// POST /api/ai/transcript-upload — upload transcript file and extract text
+app.post('/api/ai/transcript-upload', transcriptUpload.single('transcript'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'ファイルが選択されていません' });
+  }
+  try {
+    const content = fs.readFileSync(req.file.path, 'utf-8');
+    // Clean up uploaded file after reading
+    fs.unlinkSync(req.file.path);
+    res.json({ success: true, data: { text: content, filename: req.file.originalname } });
+  } catch {
+    res.status(500).json({ success: false, error: 'ファイルの読み込みに失敗しました' });
+  }
 });
 
 // Serve recruitment.html as the main page
