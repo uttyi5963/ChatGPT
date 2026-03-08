@@ -1,644 +1,1363 @@
-// ===== 人生ゲーム =====
+const STORAGE_KEY = "taskDashboard.tasks.v1";
+const ORG_STORAGE_KEY = "taskDashboard.organization.v1";
+const SETTINGS_KEY = "taskDashboard.settings.v1";
+const ALERT_SENT_KEY = "taskDashboard.alerts.sent.v1";
+const ALERT_CHECK_INTERVAL_MS = 60 * 1000;
 
-// --- マスの定義 ---
-const TILE_TYPES = {
-    START: 'start',
-    SALARY: 'salary',
-    EVENT: 'event',
-    LUCKY: 'lucky',
-    UNLUCKY: 'unlucky',
-    CHOICE: 'choice',
-    JOB: 'job',
-    MARRIAGE: 'marriage',
-    HOUSE: 'house',
-    GOAL: 'goal',
+const STATUS_LABELS = {
+    todo: "未着手",
+    doing: "進行中",
+    done: "完了",
 };
 
-const TILE_COLORS = {
-    [TILE_TYPES.START]: '#4CAF50',
-    [TILE_TYPES.SALARY]: '#2196F3',
-    [TILE_TYPES.EVENT]: '#9C27B0',
-    [TILE_TYPES.LUCKY]: '#FFD700',
-    [TILE_TYPES.UNLUCKY]: '#F44336',
-    [TILE_TYPES.CHOICE]: '#FF9800',
-    [TILE_TYPES.JOB]: '#00BCD4',
-    [TILE_TYPES.MARRIAGE]: '#E91E63',
-    [TILE_TYPES.HOUSE]: '#8BC34A',
-    [TILE_TYPES.GOAL]: '#FF5722',
+const PRIORITY_LABELS = {
+    high: "高",
+    medium: "中",
+    low: "低",
 };
 
-const PLAYER_COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A'];
-
-// --- マスデータ ---
-function createBoard() {
-    return [
-        { type: TILE_TYPES.START, name: 'スタート', description: '人生の始まり！' },
-        { type: TILE_TYPES.JOB, name: '就職活動', description: '職業を選ぼう！',
-            choices: [
-                { text: '会社員（給料日+$3000）', job: '会社員', salary: 3000 },
-                { text: 'エンジニア（給料日+$4000）', job: 'エンジニア', salary: 4000 },
-                { text: 'アーティスト（給料日+$2000〜$6000）', job: 'アーティスト', salary: 2000, salaryMax: 6000 },
-            ]
-        },
-        { type: TILE_TYPES.SALARY, name: '給料日', description: '給料をもらった！' },
-        { type: TILE_TYPES.LUCKY, name: '宝くじ当選！', description: '$5000ゲット！', money: 5000 },
-        { type: TILE_TYPES.EVENT, name: '資格取得', description: '資格を取って給料アップ！給料+$500', salaryBonus: 500 },
-        { type: TILE_TYPES.UNLUCKY, name: '交通事故', description: '修理代 $2000...', money: -2000 },
-        { type: TILE_TYPES.SALARY, name: '給料日', description: '給料をもらった！' },
-        { type: TILE_TYPES.CHOICE, name: '投資チャンス', description: '投資する？',
-            choices: [
-                { text: '株式投資する（50%で$8000獲得、50%で$4000損失）', successMoney: 8000, failMoney: -4000, chance: 0.5 },
-                { text: '投資しない（何も起きない）', successMoney: 0, failMoney: 0, chance: 1.0 },
-            ]
-        },
-        { type: TILE_TYPES.LUCKY, name: 'ボーナス！', description: '特別ボーナス$3000！', money: 3000 },
-        { type: TILE_TYPES.MARRIAGE, name: '結婚', description: '結婚式を挙げよう！',
-            choices: [
-                { text: '豪華な式（-$5000、幸福度UP）', money: -5000, happiness: 3 },
-                { text: 'シンプルな式（-$1000）', money: -1000, happiness: 1 },
-            ]
-        },
-        { type: TILE_TYPES.SALARY, name: '給料日', description: '給料をもらった！' },
-        { type: TILE_TYPES.EVENT, name: '子供誕生！', description: 'おめでとう！出産祝い$2000', money: 2000 },
-        { type: TILE_TYPES.UNLUCKY, name: '病気', description: '入院費$3000...', money: -3000 },
-        { type: TILE_TYPES.HOUSE, name: 'マイホーム', description: '家を買おう！',
-            choices: [
-                { text: '豪邸を買う（-$20000、ゴール時+$30000）', money: -20000, goalBonus: 30000 },
-                { text: 'マンション（-$10000、ゴール時+$15000）', money: -10000, goalBonus: 15000 },
-                { text: '賃貸のまま（変化なし）', money: 0, goalBonus: 0 },
-            ]
-        },
-        { type: TILE_TYPES.SALARY, name: '給料日', description: '給料をもらった！' },
-        { type: TILE_TYPES.LUCKY, name: '遺産相続', description: 'おじいちゃんから$8000！', money: 8000 },
-        { type: TILE_TYPES.CHOICE, name: '転職チャンス', description: '転職する？',
-            choices: [
-                { text: '起業する（給料日+$6000、ただしリスクあり）', job: '起業家', salary: 6000, risk: true },
-                { text: '今の仕事を続ける', job: null },
-            ]
-        },
-        { type: TILE_TYPES.SALARY, name: '給料日', description: '給料をもらった！' },
-        { type: TILE_TYPES.UNLUCKY, name: '自然災害', description: '修繕費$4000...', money: -4000 },
-        { type: TILE_TYPES.EVENT, name: '副業成功', description: '副業で$5000稼いだ！', money: 5000 },
-        { type: TILE_TYPES.SALARY, name: '給料日', description: '給料をもらった！' },
-        { type: TILE_TYPES.LUCKY, name: '株価高騰！', description: '持ち株が上がった！$6000獲得！', money: 6000 },
-        { type: TILE_TYPES.CHOICE, name: '海外旅行', description: '旅行に行く？',
-            choices: [
-                { text: '世界一周（-$8000、思い出プライスレス）', money: -8000, happiness: 5 },
-                { text: '国内旅行（-$2000）', money: -2000, happiness: 2 },
-                { text: '旅行しない', money: 0, happiness: 0 },
-            ]
-        },
-        { type: TILE_TYPES.UNLUCKY, name: '詐欺被害', description: '$5000騙し取られた...', money: -5000 },
-        { type: TILE_TYPES.SALARY, name: '給料日', description: '給料をもらった！' },
-        { type: TILE_TYPES.EVENT, name: '昇進！', description: '昇進して給料+$1000！', salaryBonus: 1000 },
-        { type: TILE_TYPES.LUCKY, name: '懸賞当選', description: '豪華賞品$4000相当！', money: 4000 },
-        { type: TILE_TYPES.SALARY, name: '給料日', description: '給料をもらった！' },
-        { type: TILE_TYPES.CHOICE, name: '老後の備え', description: '年金プランを選ぼう',
-            choices: [
-                { text: '手厚い年金（-$5000、ゴール時+$10000）', money: -5000, goalBonus: 10000 },
-                { text: '普通の年金（-$2000、ゴール時+$4000）', money: -2000, goalBonus: 4000 },
-            ]
-        },
-        { type: TILE_TYPES.GOAL, name: 'ゴール！', description: '人生の集大成！お疲れ様でした！' },
-    ];
-}
-
-// --- ゲーム状態 ---
-let gameState = {
-    players: [],
-    currentPlayerIndex: 0,
-    board: [],
-    phase: 'title', // title, playing, finished
-    rolling: false,
+const IMPORTANCE_LABELS = {
+    s: "S",
+    a: "A",
+    b: "B",
+    c: "C",
 };
 
-// --- Canvas描画 ---
-const canvas = document.getElementById('board-canvas');
-const ctx = canvas ? canvas.getContext('2d') : null;
+const PRIORITY_WEIGHT = {
+    high: 3,
+    medium: 2,
+    low: 1,
+};
 
-function resizeCanvas() {
-    if (!canvas) return;
-    const container = document.getElementById('board-container');
-    const w = Math.min(container.clientWidth - 20, 1100);
-    const isMobile = w < 500;
-    const tileSize = isMobile ? 38 : 55;
-    const gap = isMobile ? 6 : 10;
-    const margin = isMobile ? 28 : 50;
-    const rowGap = isMobile ? 16 : 24;
+const IMPORTANCE_WEIGHT = {
+    s: 4,
+    a: 3,
+    b: 2,
+    c: 1,
+};
 
-    const cols = Math.floor((w - margin * 2) / (tileSize + gap));
-    const rows = Math.ceil(gameState.board.length / Math.max(cols, 1));
-    const computedH = margin * 2 + rows * (tileSize + rowGap);
+const STATUS_WEIGHT = {
+    todo: 1,
+    doing: 2,
+    done: 3,
+};
 
-    canvas.width = w;
-    canvas.height = Math.max(computedH, 300);
+const state = {
+    tasks: [],
+    organization: {
+        teams: [],
+        members: [],
+    },
+    activeDetailTaskId: null,
+    settings: {
+        alertsEnabled: false,
+    },
+    alertSentMap: {},
+    alertTimerId: null,
+    filters: {
+        search: "",
+        status: "all",
+        priority: "all",
+        importance: "all",
+        sortBy: "created_desc",
+    },
+};
+
+const elements = {
+    teamForm: document.getElementById("team-form"),
+    teamNameInput: document.getElementById("team-name-input"),
+    teamList: document.getElementById("team-list"),
+    memberForm: document.getElementById("member-form"),
+    memberNameInput: document.getElementById("member-name-input"),
+    memberTeamSelect: document.getElementById("member-team-select"),
+    memberList: document.getElementById("member-list"),
+    quickTaskForm: document.getElementById("quick-task-form"),
+    quickTaskTitle: document.getElementById("quick-task-title"),
+    quickTaskDueDate: document.getElementById("quick-task-due-date"),
+    quickTaskTeam: document.getElementById("quick-task-team"),
+    quickTaskMember: document.getElementById("quick-task-member"),
+    quickChecklistContainer: document.getElementById("quick-checklist-container"),
+    quickAddCheckItemButton: document.getElementById("quick-add-check-item-btn"),
+    taskForm: document.getElementById("task-form"),
+    taskId: document.getElementById("task-id"),
+    taskTitle: document.getElementById("task-title"),
+    taskDescription: document.getElementById("task-description"),
+    taskDueDate: document.getElementById("task-due-date"),
+    taskPriority: document.getElementById("task-priority"),
+    taskStatus: document.getElementById("task-status"),
+    taskImportance: document.getElementById("task-importance"),
+    taskCategory: document.getElementById("task-category"),
+    saveButton: document.getElementById("save-task-btn"),
+    resetButton: document.getElementById("reset-form-btn"),
+    searchInput: document.getElementById("search-input"),
+    filterStatus: document.getElementById("filter-status"),
+    filterPriority: document.getElementById("filter-priority"),
+    filterImportance: document.getElementById("filter-importance"),
+    sortBy: document.getElementById("sort-by"),
+    taskList: document.getElementById("task-list"),
+    emptyState: document.getElementById("empty-state"),
+    taskCountText: document.getElementById("task-count-text"),
+    metricTotal: document.getElementById("metric-total"),
+    metricDoing: document.getElementById("metric-doing"),
+    metricDone: document.getElementById("metric-done"),
+    metricOverdue: document.getElementById("metric-overdue"),
+    completionText: document.getElementById("completion-text"),
+    completionBar: document.getElementById("completion-bar"),
+    priorityBreakdown: document.getElementById("priority-breakdown"),
+    importanceBreakdown: document.getElementById("importance-breakdown"),
+    memberStatsList: document.getElementById("member-stats-list"),
+    todayLabel: document.getElementById("today-label"),
+    alertEnabled: document.getElementById("alert-enabled"),
+    notificationPermissionButton: document.getElementById("notification-permission-btn"),
+    alertPermissionText: document.getElementById("alert-permission-text"),
+    alertList: document.getElementById("alert-list"),
+    detailModal: document.getElementById("task-detail-modal"),
+    detailModalTitle: document.getElementById("detail-modal-title"),
+    detailModalSummary: document.getElementById("detail-modal-summary"),
+    detailModalCloseButton: document.getElementById("detail-modal-close-btn"),
+    detailNoteForm: document.getElementById("detail-note-form"),
+    detailNoteInput: document.getElementById("detail-note-input"),
+    detailNoteList: document.getElementById("detail-note-list"),
+    bossQuestionForm: document.getElementById("boss-question-form"),
+    bossQuestionInput: document.getElementById("boss-question-input"),
+    bossQuestionList: document.getElementById("boss-question-list"),
+};
+
+function boot() {
+    state.tasks = loadTasks();
+    state.organization = loadOrganization();
+    state.settings = loadSettings();
+    state.alertSentMap = loadAlertSentMap();
+    renderTodayLabel();
+    attachEventListeners();
+    renderOrganizationSection();
+    ensureQuickChecklistRows();
+    syncAlertControls();
+    scheduleAlertCheck();
+    resetForm();
+    render();
 }
 
-function getBoardPositions() {
-    const w = canvas.width;
-    const isMobile = w < 500;
-    const tileSize = isMobile ? 38 : 55;
-    const gap = isMobile ? 6 : 10;
-    const margin = isMobile ? 28 : 50;
-    const rowGap = isMobile ? 16 : 24;
-
-    const total = gameState.board.length;
-    const cols = Math.floor((w - margin * 2) / (tileSize + gap));
-    const positions = [];
-    let row = 0;
-    let col = 0;
-    let direction = 1;
-
-    for (let i = 0; i < total; i++) {
-        const x = margin + col * (tileSize + gap) + tileSize / 2;
-        const y = margin + row * (tileSize + rowGap) + tileSize / 2;
-        positions.push({ x, y, size: tileSize });
-
-        col += direction;
-        if (col >= cols || col < 0) {
-            col = Math.max(0, Math.min(col, cols - 1));
-            row++;
-            direction *= -1;
-        }
+function loadTasks() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.map((task) => ({
+            ...task,
+            importance: isValidImportance(task.importance) ? task.importance : "b",
+            detailNotes: Array.isArray(task.detailNotes) ? task.detailNotes : [],
+            bossQuestions: Array.isArray(task.bossQuestions) ? task.bossQuestions : [],
+            checklist: normalizeChecklist(task.checklist),
+            teamId: typeof task.teamId === "string" ? task.teamId : "",
+            memberId: typeof task.memberId === "string" ? task.memberId : "",
+        }));
+    } catch (_error) {
+        return [];
     }
-    return positions;
 }
 
-function drawBoard() {
-    if (!ctx) return;
-    resizeCanvas();
+function saveTasks() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
+}
 
-    const isMobile = canvas.width < 500;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    const positions = getBoardPositions();
-    const board = gameState.board;
-
-    // パス線を描画
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = isMobile ? 2 : 3;
-    ctx.beginPath();
-    for (let i = 0; i < positions.length; i++) {
-        if (i === 0) ctx.moveTo(positions[i].x, positions[i].y);
-        else ctx.lineTo(positions[i].x, positions[i].y);
+function loadOrganization() {
+    const defaults = {
+        teams: [],
+        members: [],
+    };
+    try {
+        const raw = localStorage.getItem(ORG_STORAGE_KEY);
+        if (!raw) return defaults;
+        const parsed = JSON.parse(raw);
+        const teams = Array.isArray(parsed?.teams) ? parsed.teams : [];
+        const members = Array.isArray(parsed?.members) ? parsed.members : [];
+        return {
+            teams: teams
+                .filter((team) => team && typeof team.id === "string" && typeof team.name === "string")
+                .map((team) => ({
+                    id: team.id,
+                    name: team.name,
+                    createdAt: team.createdAt || Date.now(),
+                })),
+            members: members
+                .filter((member) => member && typeof member.id === "string" && typeof member.name === "string")
+                .map((member) => ({
+                    id: member.id,
+                    name: member.name,
+                    teamId: typeof member.teamId === "string" ? member.teamId : "",
+                    createdAt: member.createdAt || Date.now(),
+                })),
+        };
+    } catch (_error) {
+        return defaults;
     }
-    ctx.stroke();
+}
 
-    // マスを描画
-    const numFontSize = isMobile ? 9 : 11;
-    const nameFontSize = isMobile ? 8 : 10;
-    const nameMaxLen = isMobile ? 3 : 4;
-    const cornerR = isMobile ? 5 : 8;
+function saveOrganization() {
+    localStorage.setItem(ORG_STORAGE_KEY, JSON.stringify(state.organization));
+}
 
-    for (let i = 0; i < board.length; i++) {
-        const tile = board[i];
-        const pos = positions[i];
-        if (!pos) continue;
-        const s = pos.size;
-
-        // マスの背景
-        ctx.fillStyle = TILE_COLORS[tile.type] || '#555';
-        ctx.globalAlpha = 0.7;
-        ctx.beginPath();
-        roundRect(ctx, pos.x - s / 2, pos.y - s / 2, s, s, cornerR);
-        ctx.fill();
-        ctx.globalAlpha = 1.0;
-
-        // マスの枠
-        ctx.strokeStyle = TILE_COLORS[tile.type] || '#555';
-        ctx.lineWidth = isMobile ? 1.5 : 2;
-        ctx.beginPath();
-        roundRect(ctx, pos.x - s / 2, pos.y - s / 2, s, s, cornerR);
-        ctx.stroke();
-
-        // マス番号
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${numFontSize}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(i === 0 ? 'S' : i === board.length - 1 ? 'G' : i, pos.x, pos.y - s / 2 + 3);
-
-        // マス名（短縮）
-        ctx.font = `${nameFontSize}px sans-serif`;
-        ctx.textBaseline = 'middle';
-        const shortName = tile.name.length > nameMaxLen ? tile.name.slice(0, nameMaxLen) + '..' : tile.name;
-        ctx.fillText(shortName, pos.x, pos.y + (isMobile ? 5 : 8));
+function loadSettings() {
+    const defaults = { alertsEnabled: false };
+    try {
+        const raw = localStorage.getItem(SETTINGS_KEY);
+        if (!raw) return defaults;
+        const parsed = JSON.parse(raw);
+        return {
+            ...defaults,
+            ...parsed,
+        };
+    } catch (_error) {
+        return defaults;
     }
+}
 
-    // プレイヤー駒を描画
-    const pieceR = isMobile ? 6 : 8;
-    const playerPositions = {};
-    gameState.players.forEach((p, pi) => {
-        const tileIdx = p.position;
-        if (!playerPositions[tileIdx]) playerPositions[tileIdx] = [];
-        playerPositions[tileIdx].push(pi);
+function saveSettings() {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+}
+
+function loadAlertSentMap() {
+    try {
+        const raw = localStorage.getItem(ALERT_SENT_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (_error) {
+        return {};
+    }
+}
+
+function saveAlertSentMap() {
+    localStorage.setItem(ALERT_SENT_KEY, JSON.stringify(state.alertSentMap));
+}
+
+function attachEventListeners() {
+    elements.teamForm.addEventListener("submit", handleTeamSubmit);
+    elements.memberForm.addEventListener("submit", handleMemberSubmit);
+    elements.teamList.addEventListener("click", handleTeamListClick);
+    elements.memberList.addEventListener("click", handleMemberListClick);
+    elements.quickTaskForm.addEventListener("submit", handleQuickTaskSubmit);
+    elements.quickAddCheckItemButton.addEventListener("click", () => addQuickChecklistRow());
+    elements.quickChecklistContainer.addEventListener("click", handleQuickChecklistClick);
+    elements.quickTaskTeam.addEventListener("change", () => {
+        renderQuickMemberSelect(elements.quickTaskTeam.value, "");
     });
 
-    const offsetsMobile = [
-        { dx: -7, dy: -10 },
-        { dx: 7, dy: -10 },
-        { dx: -7, dy: 2 },
-        { dx: 7, dy: 2 },
-    ];
-    const offsetsDesktop = [
-        { dx: -10, dy: -14 },
-        { dx: 10, dy: -14 },
-        { dx: -10, dy: 0 },
-        { dx: 10, dy: 0 },
-    ];
-    const offsets = isMobile ? offsetsMobile : offsetsDesktop;
+    elements.taskForm.addEventListener("submit", handleSubmitTask);
+    elements.resetButton.addEventListener("click", resetForm);
 
-    gameState.players.forEach((player, pi) => {
-        const tileIdx = player.position;
-        const pos = positions[tileIdx];
-        if (!pos) return;
-
-        const samePos = playerPositions[tileIdx];
-        const offsetIndex = samePos.indexOf(pi);
-        const off = offsets[offsetIndex] || { dx: 0, dy: 0 };
-
-        // 駒
-        ctx.fillStyle = PLAYER_COLORS[pi];
-        ctx.beginPath();
-        ctx.arc(pos.x + off.dx, pos.y + off.dy, pieceR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = isMobile ? 1.5 : 2;
-        ctx.stroke();
-
-        // プレイヤー番号
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${isMobile ? 8 : 10}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(pi + 1, pos.x + off.dx, pos.y + off.dy);
+    elements.searchInput.addEventListener("input", (event) => {
+        state.filters.search = event.target.value.trim().toLowerCase();
+        renderTaskList();
     });
-}
 
-function roundRect(ctx, x, y, w, h, r) {
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h, x, y + h - r, r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
-}
+    elements.filterStatus.addEventListener("change", (event) => {
+        state.filters.status = event.target.value;
+        renderTaskList();
+    });
 
-// --- UI更新 ---
-function updatePlayerStats() {
-    const container = document.getElementById('player-stats');
-    container.innerHTML = gameState.players.map((p, i) => {
-        const isActive = i === gameState.currentPlayerIndex && gameState.phase === 'playing';
-        return `
-            <div class="player-stat ${isActive ? 'active' : ''}" style="border-left: 4px solid ${PLAYER_COLORS[i]}">
-                <div class="name" style="color: ${PLAYER_COLORS[i]}">${escapeHtml(p.name)}</div>
-                <div class="money">$${p.money.toLocaleString()}</div>
-                <div class="job">${p.job || '無職'}</div>
-            </div>
-        `;
-    }).join('');
-}
+    elements.filterPriority.addEventListener("change", (event) => {
+        state.filters.priority = event.target.value;
+        renderTaskList();
+    });
 
-function updateTurnInfo() {
-    const el = document.getElementById('turn-info');
-    const player = gameState.players[gameState.currentPlayerIndex];
-    if (player) {
-        el.textContent = `${player.name} のターン`;
-        el.style.color = PLAYER_COLORS[gameState.currentPlayerIndex];
-    }
-}
+    elements.filterImportance.addEventListener("change", (event) => {
+        state.filters.importance = event.target.value;
+        renderTaskList();
+    });
 
-function setEventLog(html) {
-    document.getElementById('event-log').innerHTML = `<p>${html}</p>`;
-}
+    elements.sortBy.addEventListener("change", (event) => {
+        state.filters.sortBy = event.target.value;
+        renderTaskList();
+    });
 
-function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
+    elements.taskList.addEventListener("click", handleTaskListClick);
 
-// --- プレイヤー名入力の生成 ---
-function generatePlayerNameInputs() {
-    const count = parseInt(document.getElementById('player-count').value);
-    const container = document.getElementById('player-names');
-    container.innerHTML = '';
-    for (let i = 0; i < count; i++) {
-        const div = document.createElement('div');
-        div.className = 'player-name-input';
-        div.innerHTML = `
-            <span class="color-dot" style="background: ${PLAYER_COLORS[i]}"></span>
-            <input type="text" id="pname-${i}" placeholder="プレイヤー${i + 1}" maxlength="10">
-        `;
-        container.appendChild(div);
-    }
-}
+    elements.alertEnabled.addEventListener("change", (event) => {
+        state.settings.alertsEnabled = event.target.checked;
+        saveSettings();
+        renderAlertPermissionText();
+        runAlertCheck();
+    });
 
-// --- ゲーム開始 ---
-function startGame() {
-    const count = parseInt(document.getElementById('player-count').value);
-    const players = [];
-    for (let i = 0; i < count; i++) {
-        const input = document.getElementById(`pname-${i}`);
-        const name = input.value.trim() || `プレイヤー${i + 1}`;
-        players.push({
-            name,
-            money: 10000,
-            position: 0,
-            job: null,
-            salary: 0,
-            goalBonus: 0,
-            happiness: 0,
-            finished: false,
-        });
-    }
-
-    gameState.players = players;
-    gameState.currentPlayerIndex = 0;
-    gameState.board = createBoard();
-    gameState.phase = 'playing';
-    gameState.rolling = false;
-
-    document.getElementById('title-screen').classList.add('hidden');
-    document.getElementById('game-screen').classList.remove('hidden');
-    document.getElementById('result-screen').classList.add('hidden');
-
-    updatePlayerStats();
-    updateTurnInfo();
-    drawBoard();
-    setEventLog('サイコロを回してスタート！');
-}
-
-// --- サイコロ ---
-function rollDice() {
-    return Math.floor(Math.random() * 6) + 1;
-}
-
-async function animateDice() {
-    const diceEl = document.getElementById('dice');
-    diceEl.classList.add('rolling');
-
-    for (let i = 0; i < 10; i++) {
-        diceEl.textContent = rollDice();
-        await sleep(80);
-    }
-
-    const result = rollDice();
-    diceEl.textContent = result;
-    diceEl.classList.remove('rolling');
-    return result;
-}
-
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// --- メインターン処理 ---
-async function handleTurn() {
-    if (gameState.rolling || gameState.phase !== 'playing') return;
-    gameState.rolling = true;
-
-    const rollBtn = document.getElementById('roll-btn');
-    rollBtn.disabled = true;
-
-    const player = gameState.players[gameState.currentPlayerIndex];
-
-    // サイコロアニメーション
-    const diceResult = await animateDice();
-    setEventLog(`${escapeHtml(player.name)} は ${diceResult} を出した！`);
-    await sleep(500);
-
-    // 移動
-    const maxPos = gameState.board.length - 1;
-    const newPos = Math.min(player.position + diceResult, maxPos);
-
-    // アニメーション付き移動
-    for (let p = player.position + 1; p <= newPos; p++) {
-        player.position = p;
-        drawBoard();
-        await sleep(200);
-    }
-
-    // マスの効果を処理
-    await processTile(player);
-
-    // ゴールチェック
-    if (player.position >= maxPos) {
-        player.finished = true;
-        player.money += player.goalBonus;
-        if (player.goalBonus > 0) {
-            setEventLog(`${escapeHtml(player.name)} がゴール！<br>住宅・年金ボーナス: +$${player.goalBonus.toLocaleString()}`);
-        } else {
-            setEventLog(`${escapeHtml(player.name)} がゴール！`);
+    elements.notificationPermissionButton.addEventListener("click", requestNotificationPermission);
+    elements.detailModalCloseButton.addEventListener("click", closeDetailModal);
+    elements.detailModal.addEventListener("click", (event) => {
+        if (event.target === elements.detailModal) {
+            closeDetailModal();
         }
-        await sleep(1500);
+    });
+    window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !elements.detailModal.classList.contains("hidden")) {
+            closeDetailModal();
+        }
+    });
+    elements.detailNoteForm.addEventListener("submit", handleDetailNoteSubmit);
+    elements.bossQuestionForm.addEventListener("submit", handleBossQuestionSubmit);
+    elements.bossQuestionList.addEventListener("click", handleBossQuestionListClick);
+}
+
+function handleTeamSubmit(event) {
+    event.preventDefault();
+    const name = elements.teamNameInput.value.trim();
+    if (!name) {
+        elements.teamNameInput.focus();
+        return;
     }
+    const duplicate = state.organization.teams.some((team) => team.name.toLowerCase() === name.toLowerCase());
+    if (duplicate) {
+        window.alert("同じチーム名がすでに存在します。");
+        return;
+    }
+    state.organization.teams.push({
+        id: generateId("team"),
+        name,
+        createdAt: Date.now(),
+    });
+    saveOrganization();
+    elements.teamNameInput.value = "";
+    renderOrganizationSection();
+    renderDashboard();
+}
 
-    updatePlayerStats();
-    drawBoard();
+function handleMemberSubmit(event) {
+    event.preventDefault();
+    const name = elements.memberNameInput.value.trim();
+    const teamId = elements.memberTeamSelect.value;
+    if (!name) {
+        elements.memberNameInput.focus();
+        return;
+    }
+    if (!teamId) {
+        window.alert("先にチームを登録してください。");
+        return;
+    }
+    state.organization.members.push({
+        id: generateId("member"),
+        name,
+        teamId,
+        createdAt: Date.now(),
+    });
+    saveOrganization();
+    elements.memberNameInput.value = "";
+    renderOrganizationSection();
+    renderDashboard();
+}
 
-    // 全員ゴールしたかチェック
-    if (gameState.players.every(p => p.finished)) {
-        endGame();
+function handleTeamListClick(event) {
+    if (event.target.dataset.action !== "delete-team") return;
+    const teamId = event.target.dataset.teamId;
+    if (!teamId) return;
+
+    state.organization.teams = state.organization.teams.filter((team) => team.id !== teamId);
+    state.organization.members = state.organization.members.filter((member) => member.teamId !== teamId);
+    state.tasks = state.tasks.map((task) => ({
+        ...task,
+        teamId: task.teamId === teamId ? "" : task.teamId,
+        memberId: state.organization.members.some((member) => member.id === task.memberId) ? task.memberId : "",
+    }));
+    saveOrganization();
+    saveTasks();
+    renderOrganizationSection();
+    render();
+}
+
+function handleMemberListClick(event) {
+    if (event.target.dataset.action !== "delete-member") return;
+    const memberId = event.target.dataset.memberId;
+    if (!memberId) return;
+
+    state.organization.members = state.organization.members.filter((member) => member.id !== memberId);
+    state.tasks = state.tasks.map((task) => ({
+        ...task,
+        memberId: task.memberId === memberId ? "" : task.memberId,
+    }));
+    saveOrganization();
+    saveTasks();
+    renderOrganizationSection();
+    render();
+}
+
+function renderOrganizationSection() {
+    const teams = state.organization.teams.slice().sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    elements.teamList.innerHTML = teams.length
+        ? teams
+              .map(
+                  (team) => `
+            <li class="compact-item">
+                <span>${escapeHtml(team.name)}</span>
+                <button type="button" data-action="delete-team" data-team-id="${escapeHtml(team.id)}">削除</button>
+            </li>
+        `
+              )
+              .join("")
+        : '<li class="compact-item"><span>チームが未登録です</span></li>';
+
+    const members = state.organization.members.slice().sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    elements.memberList.innerHTML = members.length
+        ? members
+              .map((member) => {
+                  const teamName = getTeamName(member.teamId) || "未所属";
+                  return `
+                    <li class="compact-item">
+                        <span>${escapeHtml(member.name)} <span class="muted">(${escapeHtml(teamName)})</span></span>
+                        <button type="button" data-action="delete-member" data-member-id="${escapeHtml(member.id)}">削除</button>
+                    </li>
+                `;
+              })
+              .join("")
+        : '<li class="compact-item"><span>メンバーが未登録です</span></li>';
+
+    renderMemberTeamSelect();
+    renderQuickTeamSelect();
+    renderQuickMemberSelect(elements.quickTaskTeam.value, elements.quickTaskMember.value);
+}
+
+function renderMemberTeamSelect() {
+    const options = ['<option value="">チームを選択</option>'];
+    const teams = state.organization.teams.slice().sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    for (const team of teams) {
+        options.push(`<option value="${escapeHtml(team.id)}">${escapeHtml(team.name)}</option>`);
+    }
+    elements.memberTeamSelect.innerHTML = options.join("");
+}
+
+function renderQuickTeamSelect() {
+    const previous = elements.quickTaskTeam.value || "";
+    const options = ['<option value="">未指定</option>'];
+    const teams = state.organization.teams.slice().sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    for (const team of teams) {
+        const selected = previous === team.id ? " selected" : "";
+        options.push(`<option value="${escapeHtml(team.id)}"${selected}>${escapeHtml(team.name)}</option>`);
+    }
+    elements.quickTaskTeam.innerHTML = options.join("");
+}
+
+function renderQuickMemberSelect(teamId, previousMemberId) {
+    const options = ['<option value="">未指定</option>'];
+    const members = state.organization.members
+        .filter((member) => !teamId || member.teamId === teamId)
+        .sort((a, b) => a.name.localeCompare(b.name, "ja"));
+
+    for (const member of members) {
+        const selected = previousMemberId === member.id ? " selected" : "";
+        options.push(`<option value="${escapeHtml(member.id)}"${selected}>${escapeHtml(member.name)}</option>`);
+    }
+    elements.quickTaskMember.innerHTML = options.join("");
+}
+
+function ensureQuickChecklistRows() {
+    if (elements.quickChecklistContainer.children.length > 0) return;
+    addQuickChecklistRow();
+}
+
+function addQuickChecklistRow(text = "", checked = false) {
+    const row = document.createElement("li");
+    row.className = "quick-check-row";
+    row.innerHTML = `
+        <input type="checkbox" class="quick-check-done" ${checked ? "checked" : ""}>
+        <input type="text" class="quick-check-text" maxlength="120" placeholder="チェック項目を入力" value="${escapeHtml(text)}">
+        <button type="button" class="quick-check-remove" data-action="remove-quick-row">削除</button>
+    `;
+    elements.quickChecklistContainer.appendChild(row);
+}
+
+function handleQuickChecklistClick(event) {
+    if (event.target.dataset.action !== "remove-quick-row") return;
+    const row = event.target.closest(".quick-check-row");
+    if (!row) return;
+    if (elements.quickChecklistContainer.children.length === 1) {
+        row.querySelector(".quick-check-text").value = "";
+        row.querySelector(".quick-check-done").checked = false;
+        return;
+    }
+    row.remove();
+}
+
+function handleQuickTaskSubmit(event) {
+    event.preventDefault();
+
+    const inputTitle = elements.quickTaskTitle.value.trim();
+    const checklist = getQuickChecklistDraftItems();
+    const title = inputTitle || checklist[0]?.text || "クイックタスク";
+
+    if (!title) {
+        elements.quickTaskTitle.focus();
         return;
     }
 
-    // 次のプレイヤー（ゴール済みはスキップ）
-    do {
-        gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-    } while (gameState.players[gameState.currentPlayerIndex].finished);
+    const now = Date.now();
+    const task = {
+        id: generateId("task"),
+        title,
+        description: "",
+        dueDate: elements.quickTaskDueDate.value || "",
+        priority: "medium",
+        status: "todo",
+        importance: "b",
+        category: "クイック追加",
+        teamId: elements.quickTaskTeam.value || "",
+        memberId: elements.quickTaskMember.value || "",
+        checklist,
+        detailNotes: [],
+        bossQuestions: [],
+        createdAt: now,
+        updatedAt: now,
+    };
 
-    updateTurnInfo();
-    updatePlayerStats();
-    setEventLog('サイコロを回してください！');
-
-    gameState.rolling = false;
-    rollBtn.disabled = false;
+    state.tasks.push(task);
+    saveTasks();
+    resetQuickTaskForm();
+    render();
 }
 
-// --- マスの効果処理 ---
-async function processTile(player) {
-    const tile = gameState.board[player.position];
+function getQuickChecklistDraftItems() {
+    const rows = Array.from(elements.quickChecklistContainer.querySelectorAll(".quick-check-row"));
+    return rows
+        .map((row) => ({
+            id: generateId("item"),
+            checked: Boolean(row.querySelector(".quick-check-done")?.checked),
+            text: row.querySelector(".quick-check-text")?.value.trim() || "",
+        }))
+        .filter((item) => item.text);
+}
 
-    switch (tile.type) {
-        case TILE_TYPES.START:
-            setEventLog('人生のスタート！頑張ろう！');
-            break;
+function resetQuickTaskForm() {
+    elements.quickTaskForm.reset();
+    elements.quickChecklistContainer.innerHTML = "";
+    addQuickChecklistRow();
+    renderQuickTeamSelect();
+    renderQuickMemberSelect("", "");
+}
 
-        case TILE_TYPES.SALARY:
-            if (player.salary > 0) {
-                let amount = player.salary;
-                // アーティストのランダム給料
-                if (player.job === 'アーティスト') {
-                    const min = player.salary;
-                    const max = player.salaryMax || player.salary * 3;
-                    amount = min + Math.floor(Math.random() * (max - min + 1));
-                }
-                // 起業家のリスク
-                if (player.risk && Math.random() < 0.2) {
-                    amount = -2000;
-                    setEventLog(`${escapeHtml(player.name)}: 給料日！<br>しかし事業が不調... $${Math.abs(amount).toLocaleString()}の損失`);
-                } else {
-                    setEventLog(`${escapeHtml(player.name)}: 給料日！<br>+$${amount.toLocaleString()}`);
-                }
-                player.money += amount;
-            } else {
-                setEventLog(`${escapeHtml(player.name)}: 給料日だが、まだ仕事がない...`);
-            }
-            break;
+function handleSubmitTask(event) {
+    event.preventDefault();
 
-        case TILE_TYPES.LUCKY:
-            player.money += tile.money;
-            setEventLog(`${escapeHtml(player.name)}: ${tile.name}<br>${tile.description}`);
-            break;
-
-        case TILE_TYPES.UNLUCKY:
-            player.money += tile.money;
-            setEventLog(`${escapeHtml(player.name)}: ${tile.name}<br>${tile.description}`);
-            break;
-
-        case TILE_TYPES.EVENT:
-            if (tile.money) {
-                player.money += tile.money;
-            }
-            if (tile.salaryBonus) {
-                player.salary += tile.salaryBonus;
-            }
-            setEventLog(`${escapeHtml(player.name)}: ${tile.name}<br>${tile.description}`);
-            break;
-
-        case TILE_TYPES.JOB:
-        case TILE_TYPES.MARRIAGE:
-        case TILE_TYPES.HOUSE:
-        case TILE_TYPES.CHOICE:
-            await handleChoice(player, tile);
-            break;
-
-        case TILE_TYPES.GOAL:
-            break;
+    const title = elements.taskTitle.value.trim();
+    if (!title) {
+        elements.taskTitle.focus();
+        return;
     }
 
-    await sleep(1000);
-}
+    const now = Date.now();
+    const editingId = elements.taskId.value;
+    const nextTask = {
+        id: editingId || String(now),
+        title,
+        description: elements.taskDescription.value.trim(),
+        dueDate: elements.taskDueDate.value || "",
+        priority: elements.taskPriority.value,
+        status: elements.taskStatus.value,
+        importance: elements.taskImportance.value,
+        category: elements.taskCategory.value.trim(),
+        createdAt: editingId ? undefined : now,
+        updatedAt: now,
+    };
 
-// --- 選択肢処理 ---
-function handleChoice(player, tile) {
-    return new Promise((resolve) => {
-        const modal = document.getElementById('choice-modal');
-        const titleEl = document.getElementById('choice-title');
-        const descEl = document.getElementById('choice-description');
-        const buttonsEl = document.getElementById('choice-buttons');
-
-        titleEl.textContent = tile.name;
-        descEl.textContent = tile.description;
-        buttonsEl.innerHTML = '';
-
-        tile.choices.forEach((choice, idx) => {
-            const btn = document.createElement('button');
-            btn.className = 'btn btn-choice';
-            btn.textContent = choice.text;
-            btn.addEventListener('click', () => {
-                modal.classList.add('hidden');
-                applyChoice(player, choice);
-                resolve();
-            });
-            buttonsEl.appendChild(btn);
+    if (editingId) {
+        state.tasks = state.tasks.map((task) => {
+            if (task.id !== editingId) return task;
+            return {
+                ...task,
+                ...nextTask,
+                createdAt: task.createdAt || now,
+            };
         });
+    } else {
+        state.tasks.push({
+            ...nextTask,
+            checklist: [],
+            teamId: "",
+            memberId: "",
+            detailNotes: [],
+            bossQuestions: [],
+        });
+    }
 
-        modal.classList.remove('hidden');
+    saveTasks();
+    resetForm();
+    render();
+}
+
+function handleTaskListClick(event) {
+    const action = event.target.dataset.action;
+    if (!action) return;
+
+    const listItem = event.target.closest(".task-item");
+    if (!listItem) return;
+    const taskId = listItem.dataset.id;
+
+    if (action === "delete") {
+        deleteTask(taskId);
+        return;
+    }
+
+    if (action === "edit") {
+        beginEditTask(taskId);
+        return;
+    }
+
+    if (action === "cycle-status") {
+        cycleTaskStatus(taskId);
+        return;
+    }
+
+    if (action === "detail") {
+        openDetailModal(taskId);
+        return;
+    }
+
+    if (action === "toggle-check-item") {
+        const checkId = event.target.dataset.checkId;
+        toggleChecklistItem(taskId, checkId, event.target.checked);
+    }
+}
+
+function toggleChecklistItem(taskId, checkId, checked) {
+    if (!checkId) return;
+    updateTaskById(taskId, (current) => ({
+        ...current,
+        checklist: normalizeChecklist(current.checklist).map((item) => {
+            if (item.id !== checkId) return item;
+            return {
+                ...item,
+                checked,
+            };
+        }),
+    }));
+    render();
+}
+
+function deleteTask(taskId) {
+    state.tasks = state.tasks.filter((task) => task.id !== taskId);
+    saveTasks();
+    render();
+}
+
+function beginEditTask(taskId) {
+    const task = state.tasks.find((item) => item.id === taskId);
+    if (!task) return;
+
+    elements.taskId.value = task.id;
+    elements.taskTitle.value = task.title;
+    elements.taskDescription.value = task.description || "";
+    elements.taskDueDate.value = task.dueDate || "";
+    elements.taskPriority.value = task.priority;
+    elements.taskStatus.value = task.status;
+    elements.taskImportance.value = isValidImportance(task.importance) ? task.importance : "b";
+    elements.taskCategory.value = task.category || "";
+    elements.saveButton.textContent = "更新する";
+    elements.taskTitle.focus();
+}
+
+function cycleTaskStatus(taskId) {
+    const order = ["todo", "doing", "done"];
+
+    state.tasks = state.tasks.map((task) => {
+        if (task.id !== taskId) return task;
+        const currentIndex = order.indexOf(task.status);
+        const nextStatus = order[(currentIndex + 1) % order.length];
+        return {
+            ...task,
+            status: nextStatus,
+            updatedAt: Date.now(),
+        };
     });
+
+    saveTasks();
+    render();
 }
 
-function applyChoice(player, choice) {
-    let msg = '';
-
-    // 職業変更
-    if (choice.job) {
-        player.job = choice.job;
-        player.salary = choice.salary || 0;
-        if (choice.salaryMax) player.salaryMax = choice.salaryMax;
-        if (choice.risk) player.risk = true;
-        msg += `職業: ${choice.job}に決定！ `;
-    }
-
-    // お金の変動
-    if (choice.money !== undefined && choice.money !== 0) {
-        player.money += choice.money;
-        if (choice.money > 0) msg += `+$${choice.money.toLocaleString()} `;
-        else msg += `-$${Math.abs(choice.money).toLocaleString()} `;
-    }
-
-    // ギャンブル系
-    if (choice.successMoney !== undefined && choice.chance !== undefined && choice.chance < 1.0) {
-        if (Math.random() < choice.chance) {
-            player.money += choice.successMoney;
-            msg += `成功！ +$${choice.successMoney.toLocaleString()} `;
-        } else {
-            player.money += choice.failMoney;
-            msg += `失敗... $${Math.abs(choice.failMoney).toLocaleString()}の損失 `;
-        }
-    }
-
-    // ゴールボーナス
-    if (choice.goalBonus) {
-        player.goalBonus += choice.goalBonus;
-        msg += `ゴール時ボーナス+$${choice.goalBonus.toLocaleString()} `;
-    }
-
-    // 幸福度
-    if (choice.happiness) {
-        player.happiness += choice.happiness;
-    }
-
-    setEventLog(`${escapeHtml(player.name)}: ${msg || '何も起きなかった'}`);
+function resetForm() {
+    elements.taskForm.reset();
+    elements.taskId.value = "";
+    elements.taskPriority.value = "medium";
+    elements.taskStatus.value = "todo";
+    elements.taskImportance.value = "b";
+    elements.saveButton.textContent = "タスクを保存";
 }
 
-// --- ゲーム終了 ---
-function endGame() {
-    gameState.phase = 'finished';
+function render() {
+    renderDashboard();
+    renderAlerts();
+    renderTaskList();
+    runAlertCheck();
+}
 
-    // 最終資産でソート
-    const ranked = [...gameState.players].sort((a, b) => b.money - a.money);
+function renderDashboard() {
+    const total = state.tasks.length;
+    const done = state.tasks.filter((task) => task.status === "done").length;
+    const doing = state.tasks.filter((task) => task.status === "doing").length;
+    const overdue = state.tasks.filter(isTaskOverdue).length;
+    const completionRate = total === 0 ? 0 : Math.round((done / total) * 100);
 
-    const rankingsEl = document.getElementById('rankings');
-    const medals = ['🥇', '🥈', '🥉', ''];
-    rankingsEl.innerHTML = ranked.map((p, i) => {
-        const pi = gameState.players.indexOf(p);
-        return `
-            <div class="rank-item ${i === 0 ? 'first' : ''}">
-                <span class="rank-number">${medals[i] || (i + 1) + '位'}</span>
-                <span class="rank-name" style="color: ${PLAYER_COLORS[pi]}">${escapeHtml(p.name)}</span>
-                <span class="rank-money">$${p.money.toLocaleString()}</span>
+    elements.metricTotal.textContent = String(total);
+    elements.metricDoing.textContent = String(doing);
+    elements.metricDone.textContent = String(done);
+    elements.metricOverdue.textContent = String(overdue);
+    elements.completionText.textContent = `${completionRate}%`;
+    elements.completionBar.style.width = `${completionRate}%`;
+
+    const counts = {
+        high: 0,
+        medium: 0,
+        low: 0,
+    };
+    state.tasks.forEach((task) => {
+        if (counts[task.priority] !== undefined) counts[task.priority] += 1;
+    });
+
+    elements.priorityBreakdown.innerHTML = [
+        `高: ${counts.high}`,
+        `中: ${counts.medium}`,
+        `低: ${counts.low}`,
+    ]
+        .map((text) => `<li><span>${text.split(": ")[0]}</span><strong>${text.split(": ")[1]}</strong></li>`)
+        .join("");
+
+    const importanceCounts = {
+        s: 0,
+        a: 0,
+        b: 0,
+        c: 0,
+    };
+    state.tasks.forEach((task) => {
+        const rank = isValidImportance(task.importance) ? task.importance : "b";
+        importanceCounts[rank] += 1;
+    });
+    elements.importanceBreakdown.innerHTML = [
+        `S: ${importanceCounts.s}`,
+        `A: ${importanceCounts.a}`,
+        `B: ${importanceCounts.b}`,
+        `C: ${importanceCounts.c}`,
+    ]
+        .map((text) => `<li><span>${text.split(": ")[0]}</span><strong>${text.split(": ")[1]}</strong></li>`)
+        .join("");
+
+    renderMemberStats();
+}
+
+function renderMemberStats() {
+    const members = state.organization.members.slice().sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    const items = members.map((member) => {
+        const memberTasks = state.tasks.filter((task) => task.memberId === member.id);
+        return createMemberStatItemHtml(member.name, getTeamName(member.teamId), memberTasks);
+    });
+
+    const unassignedTasks = state.tasks.filter((task) => !task.memberId);
+    if (unassignedTasks.length > 0) {
+        items.push(createMemberStatItemHtml("未割り当て", "", unassignedTasks));
+    }
+
+    elements.memberStatsList.innerHTML = items.length
+        ? items.join("")
+        : '<li class="member-stat-item"><p class="member-stat-values">メンバー登録後に集計が表示されます。</p></li>';
+}
+
+function createMemberStatItemHtml(name, teamName, tasks) {
+    const total = tasks.length;
+    const done = tasks.filter((task) => task.status === "done").length;
+    const doing = tasks.filter((task) => task.status === "doing").length;
+    const todo = tasks.filter((task) => task.status === "todo").length;
+    const completion = total === 0 ? 0 : Math.round((done / total) * 100);
+
+    return `
+        <li class="member-stat-item">
+            <div class="member-stat-head">
+                <span class="member-stat-name">${escapeHtml(name)}</span>
+                <span class="member-stat-team">${escapeHtml(teamName || "")}</span>
             </div>
-        `;
-    }).join('');
-
-    document.getElementById('game-screen').classList.add('hidden');
-    document.getElementById('result-screen').classList.remove('hidden');
+            <p class="member-stat-values">全${total}件 / 未着手${todo}件 / 進行中${doing}件 / 完了${done}件 / 完了率${completion}%</p>
+        </li>
+    `;
 }
 
-// --- イベントリスナー ---
-document.addEventListener('DOMContentLoaded', () => {
-    generatePlayerNameInputs();
+function renderTaskList() {
+    const filteredTasks = getVisibleTasks();
 
-    document.getElementById('player-count').addEventListener('change', generatePlayerNameInputs);
+    elements.taskCountText.textContent = `${filteredTasks.length}件表示 / 全${state.tasks.length}件`;
+    elements.emptyState.classList.toggle("hidden", filteredTasks.length > 0);
+    elements.taskList.classList.toggle("hidden", filteredTasks.length === 0);
 
-    document.getElementById('start-btn').addEventListener('click', startGame);
+    elements.taskList.innerHTML = filteredTasks.map(renderTaskItem).join("");
+}
 
-    document.getElementById('roll-btn').addEventListener('click', handleTurn);
+function renderAlerts() {
+    const alertTasks = getAlertTasks();
+    const items = [];
 
-    document.getElementById('restart-btn').addEventListener('click', () => {
-        document.getElementById('result-screen').classList.add('hidden');
-        document.getElementById('title-screen').classList.remove('hidden');
-        document.getElementById('dice').textContent = '?';
-        generatePlayerNameInputs();
-    });
-
-    window.addEventListener('resize', () => {
-        if (gameState.phase === 'playing') {
-            drawBoard();
+    if (alertTasks.length === 0) {
+        items.push('<li class="alert-item empty">現在、期限アラート対象のタスクはありません。</li>');
+    } else {
+        for (const task of alertTasks) {
+            const kind = getAlertKind(task);
+            const label = kind === "overdue" ? "期限切れ" : "本日期限";
+            items.push(
+                `<li class="alert-item ${kind}">[${label}] ${escapeHtml(task.title)}（期限: ${escapeHtml(task.dueDate)}）</li>`
+            );
         }
+    }
+
+    elements.alertList.innerHTML = items.join("");
+    renderAlertPermissionText();
+}
+
+function getVisibleTasks() {
+    const searchWord = state.filters.search;
+
+    const filtered = state.tasks.filter((task) => {
+        const statusMatch = state.filters.status === "all" || task.status === state.filters.status;
+        const priorityMatch = state.filters.priority === "all" || task.priority === state.filters.priority;
+        const importance = isValidImportance(task.importance) ? task.importance : "b";
+        const importanceMatch = state.filters.importance === "all" || importance === state.filters.importance;
+        const teamName = getTeamName(task.teamId);
+        const memberName = getMemberName(task.memberId);
+        const checklistText = normalizeChecklist(task.checklist)
+            .map((item) => item.text)
+            .join(" ");
+        const searchable = `${task.title} ${task.description || ""} ${task.category || ""} ${teamName} ${memberName} ${checklistText}`.toLowerCase();
+        const searchMatch = !searchWord || searchable.includes(searchWord);
+
+        return statusMatch && priorityMatch && importanceMatch && searchMatch;
     });
-});
+
+    const sortType = state.filters.sortBy;
+    filtered.sort((a, b) => compareTasks(a, b, sortType));
+    return filtered;
+}
+
+function compareTasks(a, b, sortType) {
+    if (sortType === "created_asc") {
+        return (a.createdAt || 0) - (b.createdAt || 0);
+    }
+    if (sortType === "updated_desc") {
+        return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
+    }
+    if (sortType === "updated_asc") {
+        return (a.updatedAt || a.createdAt || 0) - (b.updatedAt || b.createdAt || 0);
+    }
+    if (sortType === "due_asc") {
+        return compareDueDate(a.dueDate, b.dueDate);
+    }
+    if (sortType === "due_desc") {
+        return compareDueDate(b.dueDate, a.dueDate);
+    }
+    if (sortType === "priority_desc") {
+        return (PRIORITY_WEIGHT[b.priority] || 0) - (PRIORITY_WEIGHT[a.priority] || 0);
+    }
+    if (sortType === "importance_desc") {
+        const bImportance = isValidImportance(b.importance) ? b.importance : "b";
+        const aImportance = isValidImportance(a.importance) ? a.importance : "b";
+        return (IMPORTANCE_WEIGHT[bImportance] || 0) - (IMPORTANCE_WEIGHT[aImportance] || 0);
+    }
+    if (sortType === "status_asc") {
+        return (STATUS_WEIGHT[a.status] || 99) - (STATUS_WEIGHT[b.status] || 99);
+    }
+    if (sortType === "title_asc") {
+        return String(a.title || "").localeCompare(String(b.title || ""), "ja");
+    }
+    if (sortType === "title_desc") {
+        return String(b.title || "").localeCompare(String(a.title || ""), "ja");
+    }
+    if (sortType === "importance_due_asc") {
+        const importanceCompare = compareImportanceDesc(a, b);
+        if (importanceCompare !== 0) return importanceCompare;
+        const dueCompare = compareDueDate(a.dueDate, b.dueDate);
+        if (dueCompare !== 0) return dueCompare;
+        return compareUpdatedDesc(a, b);
+    }
+    if (sortType === "priority_due_asc") {
+        const priorityCompare = comparePriorityDesc(a, b);
+        if (priorityCompare !== 0) return priorityCompare;
+        const dueCompare = compareDueDate(a.dueDate, b.dueDate);
+        if (dueCompare !== 0) return dueCompare;
+        return compareUpdatedDesc(a, b);
+    }
+    if (sortType === "status_importance_due_asc") {
+        const statusCompare = (STATUS_WEIGHT[a.status] || 99) - (STATUS_WEIGHT[b.status] || 99);
+        if (statusCompare !== 0) return statusCompare;
+        const importanceCompare = compareImportanceDesc(a, b);
+        if (importanceCompare !== 0) return importanceCompare;
+        const dueCompare = compareDueDate(a.dueDate, b.dueDate);
+        if (dueCompare !== 0) return dueCompare;
+        return compareUpdatedDesc(a, b);
+    }
+    return (b.createdAt || 0) - (a.createdAt || 0);
+}
+
+function comparePriorityDesc(a, b) {
+    return (PRIORITY_WEIGHT[b.priority] || 0) - (PRIORITY_WEIGHT[a.priority] || 0);
+}
+
+function compareImportanceDesc(a, b) {
+    const bImportance = isValidImportance(b.importance) ? b.importance : "b";
+    const aImportance = isValidImportance(a.importance) ? a.importance : "b";
+    return (IMPORTANCE_WEIGHT[bImportance] || 0) - (IMPORTANCE_WEIGHT[aImportance] || 0);
+}
+
+function compareUpdatedDesc(a, b) {
+    return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
+}
+
+function compareDueDate(aDue, bDue) {
+    if (!aDue && !bDue) return 0;
+    if (!aDue) return 1;
+    if (!bDue) return -1;
+    return aDue.localeCompare(bDue);
+}
+
+function renderTaskItem(task) {
+    const dueInfo = getDueInfo(task);
+    const dueClass = dueInfo.kind !== "normal" ? ` ${dueInfo.kind}` : "";
+    const categoryText = task.category ? `カテゴリ: ${escapeHtml(task.category)}` : "カテゴリなし";
+    const importance = isValidImportance(task.importance) ? task.importance : "b";
+    const teamName = getTeamName(task.teamId);
+    const memberName = getMemberName(task.memberId);
+    const assignmentText = memberName || teamName ? `担当: ${memberName || "未指定"} / ${teamName || "未指定"}` : "";
+    const checklistHtml = renderTaskChecklist(task);
+
+    return `
+        <li class="task-item ${escapeHtml(task.status)}" data-id="${escapeHtml(task.id)}">
+            <div class="task-top">
+                <div>
+                    <h3 class="task-title">${escapeHtml(task.title)}</h3>
+                    <div class="task-meta">
+                        <span class="badge status-${escapeHtml(task.status)}">${escapeHtml(STATUS_LABELS[task.status] || task.status)}</span>
+                        <span class="badge importance-${escapeHtml(importance)}">重要度: ${escapeHtml(IMPORTANCE_LABELS[importance])}</span>
+                        <span class="badge priority-${escapeHtml(task.priority)}">優先度: ${escapeHtml(PRIORITY_LABELS[task.priority] || task.priority)}</span>
+                        <span class="badge">${categoryText}</span>
+                    </div>
+                </div>
+                <div class="task-actions">
+                    <button type="button" data-action="detail">詳細</button>
+                    <button type="button" data-action="cycle-status">進捗変更</button>
+                    <button type="button" data-action="edit">編集</button>
+                    <button type="button" data-action="delete">削除</button>
+                </div>
+            </div>
+            ${task.description ? `<p class="task-description">${escapeHtml(task.description)}</p>` : ""}
+            ${assignmentText ? `<p class="task-sub-meta">${escapeHtml(assignmentText)}</p>` : ""}
+            ${checklistHtml}
+            <p class="task-sub-meta">詳細メモ: ${(task.detailNotes || []).length}件 / 上司への質問: ${(task.bossQuestions || []).length}件</p>
+            <p class="due-text${dueClass}">${escapeHtml(dueInfo.text)}</p>
+        </li>
+    `;
+}
+
+function renderTaskChecklist(task) {
+    const checklist = normalizeChecklist(task.checklist);
+    if (checklist.length === 0) return "";
+
+    return `
+        <ul class="task-checklist">
+            ${checklist
+                .map(
+                    (item) => `
+                <li>
+                    <label>
+                        <input type="checkbox" data-action="toggle-check-item" data-check-id="${escapeHtml(item.id)}" ${item.checked ? "checked" : ""}>
+                        <span class="task-check-text ${item.checked ? "checked" : ""}">${escapeHtml(item.text)}</span>
+                    </label>
+                </li>
+            `
+                )
+                .join("")}
+        </ul>
+    `;
+}
+
+function openDetailModal(taskId) {
+    const task = state.tasks.find((item) => item.id === taskId);
+    if (!task) return;
+    state.activeDetailTaskId = taskId;
+    renderDetailModal();
+    elements.detailModal.classList.remove("hidden");
+}
+
+function closeDetailModal() {
+    state.activeDetailTaskId = null;
+    elements.detailModal.classList.add("hidden");
+    elements.detailNoteInput.value = "";
+    elements.bossQuestionInput.value = "";
+}
+
+function renderDetailModal() {
+    const task = getActiveDetailTask();
+    if (!task) return;
+
+    const importance = isValidImportance(task.importance) ? task.importance : "b";
+    const teamName = getTeamName(task.teamId) || "未指定";
+    const memberName = getMemberName(task.memberId) || "未指定";
+    elements.detailModalTitle.textContent = task.title;
+    elements.detailModalSummary.textContent = [
+        `ステータス: ${STATUS_LABELS[task.status] || task.status}`,
+        `重要度: ${IMPORTANCE_LABELS[importance]}`,
+        `優先度: ${PRIORITY_LABELS[task.priority] || task.priority}`,
+        `カテゴリ: ${task.category || "カテゴリなし"}`,
+        `担当チーム: ${teamName}`,
+        `担当メンバー: ${memberName}`,
+        `チェック項目: ${normalizeChecklist(task.checklist).length}件`,
+        `期限: ${task.dueDate || "指定なし"}`,
+        "",
+        `詳細: ${task.description || "詳細説明なし"}`,
+    ].join("\n");
+
+    const notes = (task.detailNotes || []).slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    elements.detailNoteList.innerHTML = notes.length
+        ? notes
+              .map(
+                  (note) => `
+            <li class="timeline-item">
+                <div class="timeline-meta">${escapeHtml(formatDateTime(note.createdAt))}</div>
+                <p class="timeline-text">${escapeHtml(note.text || "")}</p>
+            </li>
+        `
+              )
+              .join("")
+        : '<li class="timeline-item"><p class="timeline-text">まだ詳細メモはありません。</p></li>';
+
+    const questions = (task.bossQuestions || []).slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    elements.bossQuestionList.innerHTML = questions.length
+        ? questions
+              .map((question) => {
+                  const statusClass = question.status === "answered" ? "answered" : "open";
+                  const answerBlock = question.answer
+                      ? `<p class="timeline-text">回答: ${escapeHtml(question.answer)}</p>`
+                      : "";
+                  const actionButton =
+                      question.status === "answered"
+                          ? `<button type="button" data-action="reopen-question" data-question-id="${escapeHtml(question.id)}">未回答に戻す</button>`
+                          : `<button type="button" data-action="answer-question" data-question-id="${escapeHtml(question.id)}">回答を記録</button>`;
+
+                  return `
+                    <li class="timeline-item">
+                        <div class="timeline-meta">
+                            ${escapeHtml(formatDateTime(question.createdAt))}
+                            <span class="question-status ${statusClass}">${question.status === "answered" ? "回答済み" : "未回答"}</span>
+                        </div>
+                        <p class="timeline-text">${escapeHtml(question.text || "")}</p>
+                        ${answerBlock}
+                        <div class="timeline-actions">
+                            ${actionButton}
+                        </div>
+                    </li>
+                `;
+              })
+              .join("")
+        : '<li class="timeline-item"><p class="timeline-text">まだ上司への質問はありません。</p></li>';
+}
+
+function handleDetailNoteSubmit(event) {
+    event.preventDefault();
+    const task = getActiveDetailTask();
+    if (!task) return;
+
+    const text = elements.detailNoteInput.value.trim();
+    if (!text) return;
+
+    const note = {
+        id: String(Date.now()),
+        text,
+        createdAt: Date.now(),
+    };
+
+    updateTaskById(task.id, (current) => ({
+        ...current,
+        detailNotes: [...(current.detailNotes || []), note],
+    }));
+
+    elements.detailNoteInput.value = "";
+    render();
+    renderDetailModal();
+}
+
+function handleBossQuestionSubmit(event) {
+    event.preventDefault();
+    const task = getActiveDetailTask();
+    if (!task) return;
+
+    const text = elements.bossQuestionInput.value.trim();
+    if (!text) return;
+
+    const question = {
+        id: String(Date.now()),
+        text,
+        status: "open",
+        answer: "",
+        createdAt: Date.now(),
+        answeredAt: null,
+    };
+
+    updateTaskById(task.id, (current) => ({
+        ...current,
+        bossQuestions: [...(current.bossQuestions || []), question],
+    }));
+
+    elements.bossQuestionInput.value = "";
+    render();
+    renderDetailModal();
+}
+
+function handleBossQuestionListClick(event) {
+    const action = event.target.dataset.action;
+    if (!action) return;
+    const questionId = event.target.dataset.questionId;
+    if (!questionId) return;
+
+    const task = getActiveDetailTask();
+    if (!task) return;
+
+    if (action === "answer-question") {
+        const answer = window.prompt("上司からの回答を入力してください");
+        if (!answer || !answer.trim()) return;
+        updateTaskById(task.id, (current) => ({
+            ...current,
+            bossQuestions: (current.bossQuestions || []).map((question) => {
+                if (question.id !== questionId) return question;
+                return {
+                    ...question,
+                    status: "answered",
+                    answer: answer.trim(),
+                    answeredAt: Date.now(),
+                };
+            }),
+        }));
+        render();
+        renderDetailModal();
+        return;
+    }
+
+    if (action === "reopen-question") {
+        updateTaskById(task.id, (current) => ({
+            ...current,
+            bossQuestions: (current.bossQuestions || []).map((question) => {
+                if (question.id !== questionId) return question;
+                return {
+                    ...question,
+                    status: "open",
+                    answer: "",
+                    answeredAt: null,
+                };
+            }),
+        }));
+        render();
+        renderDetailModal();
+    }
+}
+
+function isTaskOverdue(task) {
+    return Boolean(task.dueDate) && task.status !== "done" && task.dueDate < getTodayLocalISO();
+}
+
+function getAlertTasks() {
+    const today = getTodayLocalISO();
+    return state.tasks
+        .filter((task) => task.status !== "done" && task.dueDate && task.dueDate <= today)
+        .sort((a, b) => compareDueDate(a.dueDate, b.dueDate));
+}
+
+function getAlertKind(task) {
+    return task.dueDate < getTodayLocalISO() ? "overdue" : "today";
+}
+
+function scheduleAlertCheck() {
+    if (state.alertTimerId) {
+        clearInterval(state.alertTimerId);
+    }
+    state.alertTimerId = setInterval(runAlertCheck, ALERT_CHECK_INTERVAL_MS);
+}
+
+function runAlertCheck() {
+    if (!state.settings.alertsEnabled) return;
+    if (!("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+
+    const today = getTodayLocalISO();
+    const alertTasks = getAlertTasks();
+    let hasUpdate = false;
+
+    for (const task of alertTasks) {
+        const kind = getAlertKind(task);
+        const key = `${today}|${task.id}|${kind}|${task.dueDate}`;
+        if (state.alertSentMap[key]) continue;
+
+        notifyTaskAlert(task, kind);
+        state.alertSentMap[key] = Date.now();
+        hasUpdate = true;
+    }
+
+    if (hasUpdate) {
+        pruneAlertSentMap(today);
+        saveAlertSentMap();
+    }
+}
+
+function notifyTaskAlert(task, kind) {
+    const title = kind === "overdue" ? "期限切れタスクがあります" : "本日期限のタスクがあります";
+    const body = `${task.title}（期限: ${task.dueDate}）`;
+    const notification = new Notification(title, { body });
+    notification.onclick = () => window.focus();
+}
+
+function pruneAlertSentMap(todayIso) {
+    const nextMap = {};
+    for (const [key, value] of Object.entries(state.alertSentMap)) {
+        const day = key.split("|")[0];
+        if (day === todayIso) {
+            nextMap[key] = value;
+        }
+    }
+    state.alertSentMap = nextMap;
+}
+
+async function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+        renderAlertPermissionText();
+        return;
+    }
+    try {
+        await Notification.requestPermission();
+    } catch (_error) {
+        // ignore
+    }
+    renderAlertPermissionText();
+    runAlertCheck();
+}
+
+function syncAlertControls() {
+    elements.alertEnabled.checked = Boolean(state.settings.alertsEnabled);
+    renderAlertPermissionText();
+}
+
+function renderAlertPermissionText() {
+    if (!("Notification" in window)) {
+        elements.alertPermissionText.textContent = "このブラウザは通知に対応していません。";
+        elements.notificationPermissionButton.disabled = true;
+        return;
+    }
+
+    const permission = Notification.permission;
+    if (permission === "granted") {
+        elements.alertPermissionText.textContent = state.settings.alertsEnabled
+            ? "ブラウザ通知は有効です。期限切れ/本日期限タスクを通知します。"
+            : "通知は許可済みです。チェックをONにすると通知します。";
+        elements.notificationPermissionButton.textContent = "通知許可済み";
+        elements.notificationPermissionButton.disabled = true;
+        return;
+    }
+
+    if (permission === "denied") {
+        elements.alertPermissionText.textContent = "通知がブロックされています。ブラウザ設定から許可してください。";
+        elements.notificationPermissionButton.textContent = "通知がブロック中";
+        elements.notificationPermissionButton.disabled = true;
+        return;
+    }
+
+    elements.alertPermissionText.textContent = "通知を使うには「通知を許可」を押してください。";
+    elements.notificationPermissionButton.textContent = "通知を許可";
+    elements.notificationPermissionButton.disabled = false;
+}
+
+function getDueInfo(task) {
+    if (!task.dueDate) {
+        return { text: "期限: 指定なし", kind: "normal" };
+    }
+
+    const today = getTodayLocalISO();
+    if (task.dueDate < today && task.status !== "done") {
+        return { text: `期限: ${task.dueDate} (期限切れ)`, kind: "overdue" };
+    }
+    if (task.dueDate === today && task.status !== "done") {
+        return { text: `期限: ${task.dueDate} (今日まで)`, kind: "today" };
+    }
+    return { text: `期限: ${task.dueDate}`, kind: "normal" };
+}
+
+function renderTodayLabel() {
+    const date = new Date();
+    const formatted = new Intl.DateTimeFormat("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        weekday: "short",
+    }).format(date);
+    elements.todayLabel.textContent = formatted;
+}
+
+function getTodayLocalISO() {
+    const now = new Date();
+    const tzOffsetMs = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - tzOffsetMs).toISOString().slice(0, 10);
+}
+
+function normalizeChecklist(checklist) {
+    if (!Array.isArray(checklist)) return [];
+    return checklist
+        .filter((item) => item && typeof item.text === "string")
+        .map((item) => ({
+            id: typeof item.id === "string" ? item.id : generateId("item"),
+            text: item.text.trim(),
+            checked: Boolean(item.checked),
+        }))
+        .filter((item) => item.text);
+}
+
+function isValidImportance(value) {
+    return value === "s" || value === "a" || value === "b" || value === "c";
+}
+
+function getTeamName(teamId) {
+    if (!teamId) return "";
+    const team = state.organization.teams.find((item) => item.id === teamId);
+    return team ? team.name : "";
+}
+
+function getMemberName(memberId) {
+    if (!memberId) return "";
+    const member = state.organization.members.find((item) => item.id === memberId);
+    return member ? member.name : "";
+}
+
+function getActiveDetailTask() {
+    if (!state.activeDetailTaskId) return null;
+    return state.tasks.find((task) => task.id === state.activeDetailTaskId) || null;
+}
+
+function updateTaskById(taskId, updater) {
+    state.tasks = state.tasks.map((task) => {
+        if (task.id !== taskId) return task;
+        return {
+            ...updater(task),
+            updatedAt: Date.now(),
+        };
+    });
+    saveTasks();
+}
+
+function formatDateTime(timestamp) {
+    if (!timestamp) return "日時不明";
+    return new Intl.DateTimeFormat("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(timestamp));
+}
+
+function generateId(prefix) {
+    return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function escapeHtml(text) {
+    return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+}
+
+document.addEventListener("DOMContentLoaded", boot);
