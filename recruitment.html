@@ -432,6 +432,57 @@
     .ai-flag-title{font-size:13px;font-weight:600;margin-bottom:2px;}
     .ai-flag-detail{font-size:12px;color:#666;}
 
+    /* PERSONALITY / SKILL DETAIL / EXPERIENCE EVALUATION */
+    .eval-section{margin-top:24px;}
+    .eval-section-header{font-size:13px;font-weight:700;letter-spacing:1.5px;color:var(--teal);text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px;padding-bottom:8px;border-bottom:2px solid var(--teal-soft);}
+    .eval-section-header.personality-header{color:var(--gold);border-bottom-color:var(--gold-soft);}
+    .eval-section-header.experience-header{color:var(--green);border-bottom-color:var(--green-soft);}
+    .eval-section-header .eval-icon{font-size:16px;}
+    .eval-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media(max-width:768px){.eval-grid{grid-template-columns:1fr;}}
+    .eval-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:14px 16px;transition:border-color .2s;}
+    .eval-card:hover{border-color:var(--teal);}
+    .eval-card.personality-card:hover{border-color:var(--gold);}
+    .eval-card-label{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+    .eval-card-desc{font-size:11px;color:#999;margin-bottom:10px;line-height:1.4;}
+    .eval-score-btns{display:flex;gap:4px;}
+    .eval-score-btn{width:32px;height:32px;border:2px solid var(--border);border-radius:6px;background:#fff;font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-weight:600;color:var(--ink);}
+    .eval-score-btn:hover{border-color:var(--teal);background:var(--teal-soft);}
+    .eval-score-btn.selected{background:var(--teal);color:#fff;border-color:var(--teal);}
+    .eval-score-btn.personality-btn:hover{border-color:var(--gold);background:var(--gold-soft);}
+    .eval-score-btn.personality-btn.selected{background:var(--gold);color:#fff;border-color:var(--gold);}
+    .eval-score-btn.skill-btn:hover{border-color:var(--orange);background:var(--orange-soft);}
+    .eval-score-btn.skill-btn.selected{background:var(--orange);color:#fff;border-color:var(--orange);}
+
+    .exp-eval-box{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:20px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;}
+    .exp-years-display{text-align:center;}
+    .exp-years-num{font-family:'DM Mono',monospace;font-size:42px;font-weight:700;color:var(--ink);line-height:1;}
+    .exp-years-label{font-size:11px;color:#999;margin-top:2px;}
+    .exp-rank-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;letter-spacing:.5px;}
+    .exp-rank-expert{background:var(--green-soft);color:var(--green);}
+    .exp-rank-senior{background:var(--teal-soft);color:var(--teal);}
+    .exp-rank-mid{background:var(--gold-soft);color:var(--gold);}
+    .exp-rank-junior{background:var(--orange-soft);color:var(--orange);}
+    .exp-rank-entry{background:var(--cream);color:#888;}
+    .exp-detail{flex:1;min-width:200px;}
+    .exp-bar-track{background:var(--cream);border-radius:4px;height:8px;overflow:hidden;margin-bottom:6px;}
+    .exp-bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+    .exp-bar-fill.expert{background:var(--green);}
+    .exp-bar-fill.senior{background:var(--teal);}
+    .exp-bar-fill.mid{background:var(--gold);}
+    .exp-bar-fill.junior{background:var(--orange);}
+    .exp-bar-fill.entry{background:#ccc;}
+    .exp-criteria{font-size:11px;color:#aaa;display:flex;justify-content:space-between;}
+
+    /* COMBINED TOTAL */
+    .combined-total{background:linear-gradient(135deg,var(--ink) 0%,var(--ink-mid) 100%);border-radius:var(--radius-lg);padding:24px 28px;color:#fff;margin-top:20px;}
+    .combined-total-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px;}
+    @media(max-width:768px){.combined-total-grid{grid-template-columns:repeat(2,1fr);}}
+    .ct-item{text-align:center;padding:12px;background:rgba(255,255,255,0.06);border-radius:var(--radius);border:1px solid rgba(255,255,255,0.08);}
+    .ct-label{font-size:10px;opacity:.6;letter-spacing:.5px;margin-bottom:4px;text-transform:uppercase;}
+    .ct-score{font-family:'DM Mono',monospace;font-size:24px;font-weight:700;}
+    .ct-max{font-size:12px;opacity:.4;}
+
     /* PRINT */
     @media print{
       .header,.nav-btn,.btn,.filter-bar,.toast-container{display:none!important;}
@@ -760,6 +811,30 @@
       <div>
         <div id="iv2-question-area"></div>
 
+        <!-- 性格評価セクション -->
+        <div class="eval-section" id="personality-section" style="display:none;">
+          <div class="eval-section-header personality-header">
+            <span class="eval-icon">&#128100;</span> 性格・人物評価
+          </div>
+          <div class="eval-grid" id="personality-grid"></div>
+        </div>
+
+        <!-- 経験年数評価セクション -->
+        <div class="eval-section" id="experience-section" style="display:none;">
+          <div class="eval-section-header experience-header">
+            <span class="eval-icon">&#128188;</span> 経験年数評価
+          </div>
+          <div id="experience-eval-area"></div>
+        </div>
+
+        <!-- スキル詳細評価セクション -->
+        <div class="eval-section" id="skill-detail-section" style="display:none;">
+          <div class="eval-section-header">
+            <span class="eval-icon">&#9881;</span> スキル詳細評価
+          </div>
+          <div class="eval-grid" id="skill-detail-grid"></div>
+        </div>
+
         <div class="total-bar" id="total-bar">
           <div class="tb-info">
             <h3>総合評価</h3>
@@ -1062,6 +1137,60 @@ const QUESTIONS = {
 const CAT_LABELS = {philosophy:'理念', care:'患者対応', team:'チーム', growth:'成長', skill:'専門性'};
 const CAT_TAG_CSS = {philosophy:'tag-philosophy', care:'tag-care', team:'tag-team', growth:'tag-growth', skill:'tag-skill'};
 const CAT_CARD_CSS = {philosophy:'cat-philosophy', care:'cat-care', team:'cat-team', growth:'cat-growth', skill:'cat-skill'};
+
+/* ── Personality Traits ── */
+const PERSONALITY_ITEMS = [
+  {key:'cooperation', label:'協調性', desc:'チームメンバーと円滑に協力し、他者の意見を尊重できるか'},
+  {key:'leadership', label:'リーダーシップ', desc:'周囲を巻き込み、主体的に行動・判断できるか'},
+  {key:'communication', label:'コミュニケーション力', desc:'患者・同僚・上司と適切に意思疎通ができるか'},
+  {key:'stress', label:'ストレス耐性', desc:'高圧的な状況やプレッシャーの中でも冷静に対応できるか'},
+  {key:'integrity', label:'誠実性', desc:'責任感があり、正直かつ倫理的な行動ができるか'},
+  {key:'adaptability', label:'適応力', desc:'新しい環境や変化に柔軟に対応できるか'}
+];
+
+/* ── Skill Detail Items (per job) ── */
+const SKILL_DETAIL_ITEMS = {
+  doctor: [
+    {key:'diagnosis', label:'診断能力', desc:'的確な診断を行い、適切な治療方針を立案できるか'},
+    {key:'procedure', label:'手技・手術', desc:'必要な医療手技を安全に実施できるか'},
+    {key:'emergency', label:'救急対応', desc:'緊急時に迅速かつ正確に判断・対応できるか'},
+    {key:'research', label:'学術・研究', desc:'最新のエビデンスを臨床に活用できるか'},
+    {key:'patientComm', label:'患者説明力', desc:'患者へ分かりやすく病状・治療を説明できるか'},
+    {key:'management', label:'病棟管理', desc:'病棟運営やベッドコントロールを適切に行えるか'}
+  ],
+  nurse: [
+    {key:'assessment', label:'アセスメント力', desc:'患者の状態を的確に観察・評価できるか'},
+    {key:'technique', label:'看護技術', desc:'基本的な看護技術を安全に実施できるか'},
+    {key:'emergency', label:'急変対応', desc:'急変時に適切な初期対応ができるか'},
+    {key:'recording', label:'記録・報告', desc:'看護記録を正確に作成し、適切に報告できるか'},
+    {key:'patientCare', label:'患者ケア', desc:'患者のニーズに寄り添った質の高いケアができるか'},
+    {key:'education', label:'患者指導', desc:'患者や家族への退院指導・健康教育ができるか'}
+  ],
+  clerk: [
+    {key:'reception', label:'受付対応', desc:'患者を適切に案内し、丁寧な対応ができるか'},
+    {key:'insurance', label:'保険請求', desc:'医療保険制度を理解し正確にレセプト処理できるか'},
+    {key:'accounting', label:'会計処理', desc:'医療費の計算・請求を正確に行えるか'},
+    {key:'system', label:'システム操作', desc:'電子カルテや医事システムを操作できるか'},
+    {key:'scheduling', label:'予約管理', desc:'外来予約や入退院の調整を効率的に行えるか'},
+    {key:'document', label:'文書管理', desc:'各種書類の作成・管理を正確に行えるか'}
+  ]
+};
+
+/* ── Experience Level Evaluation ── */
+function getExpLevel(years, job) {
+  if (job === 'doctor') {
+    if (years >= 20) return {rank:'expert', label:'エキスパート', pct:100, color:'var(--green)'};
+    if (years >= 10) return {rank:'senior', label:'シニア', pct:75, color:'var(--teal)'};
+    if (years >= 5) return {rank:'mid', label:'中堅', pct:50, color:'var(--gold)'};
+    if (years >= 2) return {rank:'junior', label:'若手', pct:30, color:'var(--orange)'};
+    return {rank:'entry', label:'研修医/新人', pct:10, color:'#ccc'};
+  }
+  if (years >= 15) return {rank:'expert', label:'エキスパート', pct:100, color:'var(--green)'};
+  if (years >= 8) return {rank:'senior', label:'シニア', pct:75, color:'var(--teal)'};
+  if (years >= 4) return {rank:'mid', label:'中堅', pct:50, color:'var(--gold)'};
+  if (years >= 1) return {rank:'junior', label:'若手', pct:25, color:'var(--orange)'};
+  return {rank:'entry', label:'未経験/新人', pct:5, color:'#ccc'};
+}
 
 /* ═══════════════════ NAVIGATION ═══════════════════ */
 function showPage(pageId) {
@@ -1491,6 +1620,8 @@ function renderQuestions(job) {
 let currentInterviewCandidate = null;
 let interviewScores = [];
 let interviewAnswers = [];
+let personalityScores = {};
+let skillDetailScores = {};
 
 async function refreshInterviewSelect() {
   await syncFromServer();
@@ -1522,10 +1653,15 @@ async function startInterview() {
   const qs = QUESTIONS[c.job] || [];
   interviewScores = c.scores && c.scores.length ? [...c.scores] : qs.map(() => 0);
   interviewAnswers = c.answers && c.answers.length ? [...c.answers] : qs.map(() => '');
+  personalityScores = c.personalityScores ? {...c.personalityScores} : {};
+  skillDetailScores = c.skillDetailScores ? {...c.skillDetailScores} : {};
 
   document.getElementById('interview-area').style.display = 'block';
   renderInterviewNav(qs, 0);
   renderInterviewQuestion(qs, 0);
+  renderPersonalitySection();
+  renderExperienceSection(c);
+  renderSkillDetailSection(c.job);
   updateTotalScore(qs);
 }
 
@@ -1605,25 +1741,147 @@ function saveAndNext(idx) {
   goToQuestion(idx + 1);
 }
 
+/* ═══════════════════ PERSONALITY EVALUATION ═══════════════════ */
+function renderPersonalitySection() {
+  var section = document.getElementById('personality-section');
+  var grid = document.getElementById('personality-grid');
+  section.style.display = 'block';
+  grid.innerHTML = PERSONALITY_ITEMS.map(function(item) {
+    var score = personalityScores[item.key] || 0;
+    return '<div class="eval-card personality-card">' +
+      '<div class="eval-card-label"><span style="font-size:14px;">&#9733;</span> ' + escHtml(item.label) + '</div>' +
+      '<div class="eval-card-desc">' + escHtml(item.desc) + '</div>' +
+      '<div class="eval-score-btns">' +
+        [1,2,3,4,5].map(function(s) {
+          return '<button class="eval-score-btn personality-btn' + (score===s?' selected':'') + '" onclick="setPersonalityScore(\'' + item.key + '\',' + s + ')">' + s + '</button>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function setPersonalityScore(key, score) {
+  personalityScores[key] = score;
+  renderPersonalitySection();
+  var qs = QUESTIONS[currentInterviewCandidate.job] || [];
+  updateTotalScore(qs);
+}
+
+/* ═══════════════════ EXPERIENCE EVALUATION ═══════════════════ */
+function renderExperienceSection(c) {
+  var section = document.getElementById('experience-section');
+  var area = document.getElementById('experience-eval-area');
+  var years = parseInt(c.experience) || 0;
+
+  section.style.display = 'block';
+  var level = getExpLevel(years, c.job);
+  var thresholds = c.job === 'doctor'
+    ? ['0','2年','5年','10年','20年+']
+    : ['0','1年','4年','8年','15年+'];
+
+  area.innerHTML =
+    '<div class="exp-eval-box">' +
+      '<div class="exp-years-display">' +
+        '<div class="exp-years-num">' + years + '</div>' +
+        '<div class="exp-years-label">年</div>' +
+      '</div>' +
+      '<div style="text-align:center;">' +
+        '<div class="exp-rank-badge exp-rank-' + level.rank + '">' + level.label + '</div>' +
+      '</div>' +
+      '<div class="exp-detail">' +
+        '<div class="exp-bar-track"><div class="exp-bar-fill ' + level.rank + '" style="width:' + level.pct + '%;"></div></div>' +
+        '<div class="exp-criteria">' + thresholds.map(function(t) { return '<span>' + t + '</span>'; }).join('') + '</div>' +
+      '</div>' +
+    '</div>';
+}
+
+/* ═══════════════════ SKILL DETAIL EVALUATION ═══════════════════ */
+function renderSkillDetailSection(job) {
+  var section = document.getElementById('skill-detail-section');
+  var grid = document.getElementById('skill-detail-grid');
+  var items = SKILL_DETAIL_ITEMS[job] || [];
+  if (!items.length) { section.style.display = 'none'; return; }
+
+  section.style.display = 'block';
+  grid.innerHTML = items.map(function(item) {
+    var score = skillDetailScores[item.key] || 0;
+    return '<div class="eval-card">' +
+      '<div class="eval-card-label"><span style="font-size:14px;">&#9881;</span> ' + escHtml(item.label) + '</div>' +
+      '<div class="eval-card-desc">' + escHtml(item.desc) + '</div>' +
+      '<div class="eval-score-btns">' +
+        [1,2,3,4,5].map(function(s) {
+          return '<button class="eval-score-btn skill-btn' + (score===s?' selected':'') + '" onclick="setSkillDetailScore(\'' + item.key + '\',' + s + ')">' + s + '</button>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function setSkillDetailScore(key, score) {
+  skillDetailScores[key] = score;
+  renderSkillDetailSection(currentInterviewCandidate.job);
+  var qs = QUESTIONS[currentInterviewCandidate.job] || [];
+  updateTotalScore(qs);
+}
+
 function updateTotalScore(qs) {
-  const total = interviewScores.reduce((a,b) => a+b, 0);
-  const max = qs.length * 5;
-  const pct = max > 0 ? (total / max * 100) : 0;
+  // Interview question scores
+  var qTotal = interviewScores.reduce(function(a,b){return a+b;}, 0);
+  var qMax = qs.length * 5;
 
-  document.getElementById('tb-num').innerHTML = total + '<span>/' + max + '</span>';
-  document.getElementById('tb-bar-fill').style.width = pct + '%';
+  // Personality scores
+  var pTotal = 0, pMax = PERSONALITY_ITEMS.length * 5;
+  PERSONALITY_ITEMS.forEach(function(item) { pTotal += (personalityScores[item.key] || 0); });
 
-  const verdict = document.getElementById('tb-verdict');
-  if (total === 0) {
+  // Skill detail scores
+  var job = currentInterviewCandidate ? currentInterviewCandidate.job : 'doctor';
+  var skillItems = SKILL_DETAIL_ITEMS[job] || [];
+  var sTotal = 0, sMax = skillItems.length * 5;
+  skillItems.forEach(function(item) { sTotal += (skillDetailScores[item.key] || 0); });
+
+  // Experience score
+  var expYears = currentInterviewCandidate ? parseInt(currentInterviewCandidate.experience) || 0 : 0;
+  var expLevel = getExpLevel(expYears, job);
+  var eScore = Math.round(expLevel.pct / 20); // 0-5 scale
+  var eMax = 5;
+
+  var grandTotal = qTotal + pTotal + sTotal + eScore;
+  var grandMax = qMax + pMax + sMax + eMax;
+  var grandPct = grandMax > 0 ? (grandTotal / grandMax * 100) : 0;
+
+  // Update main score bar
+  document.getElementById('tb-num').innerHTML = grandTotal + '<span>/' + grandMax + '</span>';
+  document.getElementById('tb-bar-fill').style.width = grandPct + '%';
+
+  var verdict = document.getElementById('tb-verdict');
+  if (grandTotal === 0) {
     verdict.textContent = '未評価';
     verdict.className = 'verdict verdict-pending';
-  } else if (pct >= 70) {
+  } else if (grandPct >= 70) {
     verdict.textContent = '合格';
     verdict.className = 'verdict verdict-pass';
   } else {
     verdict.textContent = '要検討';
     verdict.className = 'verdict verdict-fail';
   }
+
+  // Render combined total breakdown
+  var totalBar = document.getElementById('total-bar');
+  var breakdown = document.getElementById('score-breakdown');
+  if (!breakdown) {
+    breakdown = document.createElement('div');
+    breakdown.id = 'score-breakdown';
+    totalBar.parentNode.insertBefore(breakdown, totalBar.nextSibling);
+  }
+  breakdown.innerHTML =
+    '<div class="combined-total">' +
+      '<div class="combined-total-grid">' +
+        '<div class="ct-item"><div class="ct-label">面接質問</div><div class="ct-score">' + qTotal + '<span class="ct-max">/' + qMax + '</span></div></div>' +
+        '<div class="ct-item"><div class="ct-label">性格評価</div><div class="ct-score">' + pTotal + '<span class="ct-max">/' + pMax + '</span></div></div>' +
+        '<div class="ct-item"><div class="ct-label">スキル詳細</div><div class="ct-score">' + sTotal + '<span class="ct-max">/' + sMax + '</span></div></div>' +
+        '<div class="ct-item"><div class="ct-label">経験年数</div><div class="ct-score">' + eScore + '<span class="ct-max">/' + eMax + '</span> <span style="font-size:10px;opacity:.5;">' + expLevel.label + '</span></div></div>' +
+      '</div>' +
+    '</div>';
 }
 
 async function saveInterview() {
@@ -1636,10 +1894,24 @@ async function saveInterview() {
     if (ta) interviewAnswers[i] = ta.value;
   });
 
+  // Calculate grand total
+  var pTotal = 0;
+  PERSONALITY_ITEMS.forEach(function(item) { pTotal += (personalityScores[item.key] || 0); });
+  var skillItems = SKILL_DETAIL_ITEMS[currentInterviewCandidate.job] || [];
+  var sTotal = 0;
+  skillItems.forEach(function(item) { sTotal += (skillDetailScores[item.key] || 0); });
+  var expYears = parseInt(currentInterviewCandidate.experience) || 0;
+  var eScore = Math.round(getExpLevel(expYears, currentInterviewCandidate.job).pct / 20);
+  var qTotal = interviewScores.reduce(function(a,b){return a+b;}, 0);
+  var grandTotal = qTotal + pTotal + sTotal + eScore;
+  var grandMax = (qs.length * 5) + (PERSONALITY_ITEMS.length * 5) + (skillItems.length * 5) + 5;
+
   try {
     const res = await apiCall('PUT', '/candidates/' + currentInterviewCandidate.id + '/interview', {
       scores: [...interviewScores],
-      answers: [...interviewAnswers]
+      answers: [...interviewAnswers],
+      personalityScores: {...personalityScores},
+      skillDetailScores: {...skillDetailScores}
     });
     // Update local cache
     const idx = candidates.findIndex(x => x.id === currentInterviewCandidate.id);
@@ -1647,19 +1919,20 @@ async function saveInterview() {
     saveLocal();
     currentInterviewCandidate = res.data;
 
-    const totalScore = res.data.totalScore;
-    showToast('評価を保存しました。（スコア: ' + totalScore + '/' + (qs.length*5) + '）', 'success');
+    showToast('評価を保存しました。（総合スコア: ' + grandTotal + '/' + grandMax + '）', 'success');
   } catch {
     // Fallback: save locally
     const c = candidates.find(x => x.id === currentInterviewCandidate.id);
     if (!c) return;
     c.scores = [...interviewScores];
     c.answers = [...interviewAnswers];
-    c.totalScore = interviewScores.reduce((a,b) => a+b, 0);
+    c.personalityScores = {...personalityScores};
+    c.skillDetailScores = {...skillDetailScores};
+    c.totalScore = grandTotal;
     if (c.status === 'scheduled') c.status = 'interviewed';
-    c.timeline.push({date: new Date().toISOString(), action: '面接評価完了', note: '総合スコア: ' + c.totalScore + '/' + (qs.length*5)});
+    c.timeline.push({date: new Date().toISOString(), action: '面接評価完了', note: '総合スコア: ' + grandTotal + '/' + grandMax});
     saveLocal();
-    showToast('評価を保存しました（ローカル）。（スコア: ' + c.totalScore + '/' + (qs.length*5) + '）', 'success');
+    showToast('評価を保存しました（ローカル）。（総合スコア: ' + grandTotal + '/' + grandMax + '）', 'success');
   }
 
   refreshDashboard();
@@ -1672,8 +1945,12 @@ async function resetInterview() {
   const qs = QUESTIONS[currentInterviewCandidate.job];
   interviewScores = qs.map(() => 0);
   interviewAnswers = qs.map(() => '');
+  personalityScores = {};
+  skillDetailScores = {};
   renderInterviewNav(qs, 0);
   renderInterviewQuestion(qs, 0);
+  renderPersonalitySection();
+  renderSkillDetailSection(currentInterviewCandidate.job);
   updateTotalScore(qs);
   showToast('評価をリセットしました。', 'info');
 }
@@ -1710,8 +1987,41 @@ async function openCandidate(id) {
         '</div>'
       ).join('') +
       '</div>' +
-      '<div style="font-size:13px;"><strong>総合: </strong>' + c.totalScore + '/' + (qs.length*5) +
+      '<div style="font-size:13px;"><strong>面接質問: </strong>' + c.totalScore + '/' + (qs.length*5) +
       ' (' + Math.round(pct) + '%) — ' + (pct >= 70 ? '<span style="color:var(--green);font-weight:700;">合格</span>' : '<span style="color:var(--red);font-weight:700;">要検討</span>') + '</div>';
+
+    // Personality scores in modal
+    if (c.personalityScores && Object.keys(c.personalityScores).length) {
+      scoreHtml += '<div style="margin-top:14px;"><strong style="font-size:12px;color:var(--gold);">性格評価</strong>' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;">' +
+        PERSONALITY_ITEMS.map(function(item) {
+          var s = c.personalityScores[item.key] || 0;
+          return '<div style="text-align:center;padding:6px;background:var(--paper);border-radius:6px;">' +
+            '<div style="font-size:10px;color:#888;">' + item.label + '</div>' +
+            '<div style="font-family:\'DM Mono\',monospace;font-size:16px;font-weight:600;color:' + (s>=4?'var(--green)':s>=3?'var(--gold)':'var(--red)') + ';">' + s + '/5</div></div>';
+        }).join('') + '</div></div>';
+    }
+
+    // Skill detail scores in modal
+    if (c.skillDetailScores && Object.keys(c.skillDetailScores).length) {
+      var sdItems = SKILL_DETAIL_ITEMS[c.job] || [];
+      scoreHtml += '<div style="margin-top:14px;"><strong style="font-size:12px;color:var(--teal);">スキル詳細</strong>' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;">' +
+        sdItems.map(function(item) {
+          var s = c.skillDetailScores[item.key] || 0;
+          return '<div style="text-align:center;padding:6px;background:var(--paper);border-radius:6px;">' +
+            '<div style="font-size:10px;color:#888;">' + item.label + '</div>' +
+            '<div style="font-family:\'DM Mono\',monospace;font-size:16px;font-weight:600;color:' + (s>=4?'var(--green)':s>=3?'var(--gold)':'var(--red)') + ';">' + s + '/5</div></div>';
+        }).join('') + '</div></div>';
+    }
+
+    // Experience level in modal
+    if (c.experience) {
+      var expLv = getExpLevel(parseInt(c.experience) || 0, c.job);
+      scoreHtml += '<div style="margin-top:14px;display:flex;align-items:center;gap:10px;">' +
+        '<strong style="font-size:12px;color:var(--green);">経験年数評価:</strong> ' +
+        '<span class="exp-rank-badge exp-rank-' + expLv.rank + '">' + expLv.label + ' (' + (c.experience||0) + '年)</span></div>';
+    }
   }
 
   let timelineHtml = '<div class="section-divider">タイムライン</div><div class="timeline">';
