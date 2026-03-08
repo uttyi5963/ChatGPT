@@ -489,7 +489,44 @@ function compareTasks(a, b, sortType) {
     if (sortType === "title_desc") {
         return String(b.title || "").localeCompare(String(a.title || ""), "ja");
     }
+    if (sortType === "importance_due_asc") {
+        const importanceCompare = compareImportanceDesc(a, b);
+        if (importanceCompare !== 0) return importanceCompare;
+        const dueCompare = compareDueDate(a.dueDate, b.dueDate);
+        if (dueCompare !== 0) return dueCompare;
+        return compareUpdatedDesc(a, b);
+    }
+    if (sortType === "priority_due_asc") {
+        const priorityCompare = comparePriorityDesc(a, b);
+        if (priorityCompare !== 0) return priorityCompare;
+        const dueCompare = compareDueDate(a.dueDate, b.dueDate);
+        if (dueCompare !== 0) return dueCompare;
+        return compareUpdatedDesc(a, b);
+    }
+    if (sortType === "status_importance_due_asc") {
+        const statusCompare = (STATUS_WEIGHT[a.status] || 99) - (STATUS_WEIGHT[b.status] || 99);
+        if (statusCompare !== 0) return statusCompare;
+        const importanceCompare = compareImportanceDesc(a, b);
+        if (importanceCompare !== 0) return importanceCompare;
+        const dueCompare = compareDueDate(a.dueDate, b.dueDate);
+        if (dueCompare !== 0) return dueCompare;
+        return compareUpdatedDesc(a, b);
+    }
     return (b.createdAt || 0) - (a.createdAt || 0);
+}
+
+function comparePriorityDesc(a, b) {
+    return (PRIORITY_WEIGHT[b.priority] || 0) - (PRIORITY_WEIGHT[a.priority] || 0);
+}
+
+function compareImportanceDesc(a, b) {
+    const bImportance = isValidImportance(b.importance) ? b.importance : "b";
+    const aImportance = isValidImportance(a.importance) ? a.importance : "b";
+    return (IMPORTANCE_WEIGHT[bImportance] || 0) - (IMPORTANCE_WEIGHT[aImportance] || 0);
+}
+
+function compareUpdatedDesc(a, b) {
+    return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0);
 }
 
 function compareDueDate(aDue, bDue) {
