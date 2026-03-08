@@ -192,6 +192,37 @@
         </section>
     </div>
 
+    <div id="task-detail-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="detail-modal-title">タスク詳細</h2>
+                <button id="detail-modal-close-btn" type="button" class="btn btn-secondary">閉じる</button>
+            </div>
+
+            <div id="detail-modal-summary" class="detail-summary"></div>
+
+            <div class="detail-grid">
+                <section class="detail-panel">
+                    <h3>詳細メモを追加</h3>
+                    <form id="detail-note-form" class="stack">
+                        <textarea id="detail-note-input" rows="3" maxlength="500" placeholder="進捗、対応履歴、気づきなどを追記"></textarea>
+                        <button type="submit" class="btn btn-primary">メモを追加</button>
+                    </form>
+                    <ul id="detail-note-list" class="timeline-list"></ul>
+                </section>
+
+                <section class="detail-panel">
+                    <h3>上司に質問</h3>
+                    <form id="boss-question-form" class="stack">
+                        <textarea id="boss-question-input" rows="3" maxlength="500" placeholder="確認したい内容や判断依頼を入力"></textarea>
+                        <button type="submit" class="btn btn-primary">質問を追加</button>
+                    </form>
+                    <ul id="boss-question-list" class="timeline-list"></ul>
+                </section>
+            </div>
+        </div>
+    </div>
+
     <script src="game.js"></script>
 </body>
 </html>

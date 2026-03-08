@@ -37,6 +37,7 @@ const IMPORTANCE_WEIGHT = {
 
 const state = {
     tasks: [],
+    activeDetailTaskId: null,
     settings: {
         alertsEnabled: false,
     },
@@ -84,6 +85,16 @@ const elements = {
     notificationPermissionButton: document.getElementById("notification-permission-btn"),
     alertPermissionText: document.getElementById("alert-permission-text"),
     alertList: document.getElementById("alert-list"),
+    detailModal: document.getElementById("task-detail-modal"),
+    detailModalTitle: document.getElementById("detail-modal-title"),
+    detailModalSummary: document.getElementById("detail-modal-summary"),
+    detailModalCloseButton: document.getElementById("detail-modal-close-btn"),
+    detailNoteForm: document.getElementById("detail-note-form"),
+    detailNoteInput: document.getElementById("detail-note-input"),
+    detailNoteList: document.getElementById("detail-note-list"),
+    bossQuestionForm: document.getElementById("boss-question-form"),
+    bossQuestionInput: document.getElementById("boss-question-input"),
+    bossQuestionList: document.getElementById("boss-question-list"),
 };
 
 function boot() {
@@ -107,6 +118,8 @@ function loadTasks() {
         return parsed.map((task) => ({
             ...task,
             importance: isValidImportance(task.importance) ? task.importance : "b",
+            detailNotes: Array.isArray(task.detailNotes) ? task.detailNotes : [],
+            bossQuestions: Array.isArray(task.bossQuestions) ? task.bossQuestions : [],
         }));
     } catch (_error) {
         return [];
@@ -190,6 +203,20 @@ function attachEventListeners() {
     });
 
     elements.notificationPermissionButton.addEventListener("click", requestNotificationPermission);
+    elements.detailModalCloseButton.addEventListener("click", closeDetailModal);
+    elements.detailModal.addEventListener("click", (event) => {
+        if (event.target === elements.detailModal) {
+            closeDetailModal();
+        }
+    });
+    window.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !elements.detailModal.classList.contains("hidden")) {
+            closeDetailModal();
+        }
+    });
+    elements.detailNoteForm.addEventListener("submit", handleDetailNoteSubmit);
+    elements.bossQuestionForm.addEventListener("submit", handleBossQuestionSubmit);
+    elements.bossQuestionList.addEventListener("click", handleBossQuestionListClick);
 }
 
 function handleSubmitTask(event) {
@@ -226,7 +253,11 @@ function handleSubmitTask(event) {
             };
         });
     } else {
-        state.tasks.push(nextTask);
+        state.tasks.push({
+            ...nextTask,
+            detailNotes: [],
+            bossQuestions: [],
+        });
     }
 
     saveTasks();
@@ -254,6 +285,11 @@ function handleTaskListClick(event) {
 
     if (action === "cycle-status") {
         cycleTaskStatus(taskId);
+        return;
+    }
+
+    if (action === "detail") {
+        openDetailModal(taskId);
     }
 }
 
@@ -461,15 +497,191 @@ function renderTaskItem(task) {
                     </div>
                 </div>
                 <div class="task-actions">
+                    <button type="button" data-action="detail">詳細</button>
                     <button type="button" data-action="cycle-status">進捗変更</button>
                     <button type="button" data-action="edit">編集</button>
                     <button type="button" data-action="delete">削除</button>
                 </div>
             </div>
             ${task.description ? `<p class="task-description">${escapeHtml(task.description)}</p>` : ""}
+            <p class="task-sub-meta">詳細メモ: ${(task.detailNotes || []).length}件 / 上司への質問: ${(task.bossQuestions || []).length}件</p>
             <p class="due-text${dueClass}">${escapeHtml(dueInfo.text)}</p>
         </li>
     `;
+}
+
+function openDetailModal(taskId) {
+    const task = state.tasks.find((item) => item.id === taskId);
+    if (!task) return;
+    state.activeDetailTaskId = taskId;
+    renderDetailModal();
+    elements.detailModal.classList.remove("hidden");
+}
+
+function closeDetailModal() {
+    state.activeDetailTaskId = null;
+    elements.detailModal.classList.add("hidden");
+    elements.detailNoteInput.value = "";
+    elements.bossQuestionInput.value = "";
+}
+
+function renderDetailModal() {
+    const task = getActiveDetailTask();
+    if (!task) return;
+
+    const importance = isValidImportance(task.importance) ? task.importance : "b";
+    elements.detailModalTitle.textContent = task.title;
+    elements.detailModalSummary.textContent = [
+        `ステータス: ${STATUS_LABELS[task.status] || task.status}`,
+        `重要度: ${IMPORTANCE_LABELS[importance]}`,
+        `優先度: ${PRIORITY_LABELS[task.priority] || task.priority}`,
+        `カテゴリ: ${task.category || "カテゴリなし"}`,
+        `期限: ${task.dueDate || "指定なし"}`,
+        "",
+        `詳細: ${task.description || "詳細説明なし"}`,
+    ].join("\n");
+
+    const notes = (task.detailNotes || []).slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    elements.detailNoteList.innerHTML = notes.length
+        ? notes
+              .map(
+                  (note) => `
+            <li class="timeline-item">
+                <div class="timeline-meta">${escapeHtml(formatDateTime(note.createdAt))}</div>
+                <p class="timeline-text">${escapeHtml(note.text || "")}</p>
+            </li>
+        `
+              )
+              .join("")
+        : '<li class="timeline-item"><p class="timeline-text">まだ詳細メモはありません。</p></li>';
+
+    const questions = (task.bossQuestions || []).slice().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    elements.bossQuestionList.innerHTML = questions.length
+        ? questions
+              .map((question) => {
+                  const statusClass = question.status === "answered" ? "answered" : "open";
+                  const answerBlock = question.answer
+                      ? `<p class="timeline-text">回答: ${escapeHtml(question.answer)}</p>`
+                      : "";
+                  const actionButton =
+                      question.status === "answered"
+                          ? `<button type="button" data-action="reopen-question" data-question-id="${escapeHtml(question.id)}">未回答に戻す</button>`
+                          : `<button type="button" data-action="answer-question" data-question-id="${escapeHtml(question.id)}">回答を記録</button>`;
+
+                  return `
+                    <li class="timeline-item">
+                        <div class="timeline-meta">
+                            ${escapeHtml(formatDateTime(question.createdAt))}
+                            <span class="question-status ${statusClass}">${question.status === "answered" ? "回答済み" : "未回答"}</span>
+                        </div>
+                        <p class="timeline-text">${escapeHtml(question.text || "")}</p>
+                        ${answerBlock}
+                        <div class="timeline-actions">
+                            ${actionButton}
+                        </div>
+                    </li>
+                `;
+              })
+              .join("")
+        : '<li class="timeline-item"><p class="timeline-text">まだ上司への質問はありません。</p></li>';
+}
+
+function handleDetailNoteSubmit(event) {
+    event.preventDefault();
+    const task = getActiveDetailTask();
+    if (!task) return;
+
+    const text = elements.detailNoteInput.value.trim();
+    if (!text) return;
+
+    const note = {
+        id: String(Date.now()),
+        text,
+        createdAt: Date.now(),
+    };
+
+    updateTaskById(task.id, (current) => ({
+        ...current,
+        detailNotes: [...(current.detailNotes || []), note],
+    }));
+
+    elements.detailNoteInput.value = "";
+    render();
+    renderDetailModal();
+}
+
+function handleBossQuestionSubmit(event) {
+    event.preventDefault();
+    const task = getActiveDetailTask();
+    if (!task) return;
+
+    const text = elements.bossQuestionInput.value.trim();
+    if (!text) return;
+
+    const question = {
+        id: String(Date.now()),
+        text,
+        status: "open",
+        answer: "",
+        createdAt: Date.now(),
+        answeredAt: null,
+    };
+
+    updateTaskById(task.id, (current) => ({
+        ...current,
+        bossQuestions: [...(current.bossQuestions || []), question],
+    }));
+
+    elements.bossQuestionInput.value = "";
+    render();
+    renderDetailModal();
+}
+
+function handleBossQuestionListClick(event) {
+    const action = event.target.dataset.action;
+    if (!action) return;
+    const questionId = event.target.dataset.questionId;
+    if (!questionId) return;
+
+    const task = getActiveDetailTask();
+    if (!task) return;
+
+    if (action === "answer-question") {
+        const answer = window.prompt("上司からの回答を入力してください");
+        if (!answer || !answer.trim()) return;
+        updateTaskById(task.id, (current) => ({
+            ...current,
+            bossQuestions: (current.bossQuestions || []).map((question) => {
+                if (question.id !== questionId) return question;
+                return {
+                    ...question,
+                    status: "answered",
+                    answer: answer.trim(),
+                    answeredAt: Date.now(),
+                };
+            }),
+        }));
+        render();
+        renderDetailModal();
+        return;
+    }
+
+    if (action === "reopen-question") {
+        updateTaskById(task.id, (current) => ({
+            ...current,
+            bossQuestions: (current.bossQuestions || []).map((question) => {
+                if (question.id !== questionId) return question;
+                return {
+                    ...question,
+                    status: "open",
+                    answer: "",
+                    answeredAt: null,
+                };
+            }),
+        }));
+        render();
+        renderDetailModal();
+    }
 }
 
 function isTaskOverdue(task) {
@@ -619,6 +831,33 @@ function getTodayLocalISO() {
 
 function isValidImportance(value) {
     return value === "s" || value === "a" || value === "b" || value === "c";
+}
+
+function getActiveDetailTask() {
+    if (!state.activeDetailTaskId) return null;
+    return state.tasks.find((task) => task.id === state.activeDetailTaskId) || null;
+}
+
+function updateTaskById(taskId, updater) {
+    state.tasks = state.tasks.map((task) => {
+        if (task.id !== taskId) return task;
+        return {
+            ...updater(task),
+            updatedAt: Date.now(),
+        };
+    });
+    saveTasks();
+}
+
+function formatDateTime(timestamp) {
+    if (!timestamp) return "日時不明";
+    return new Intl.DateTimeFormat("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(timestamp));
 }
 
 function escapeHtml(text) {
