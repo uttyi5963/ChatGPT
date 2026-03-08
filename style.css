@@ -77,6 +77,82 @@ h3 {
     gap: 16px;
 }
 
+.org-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.org-card {
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 12px;
+    background: rgba(15, 23, 42, 0.52);
+}
+
+.compact-list {
+    list-style: none;
+    margin: 10px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.compact-item {
+    border: 1px solid #475569;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.45);
+    padding: 8px 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.compact-item button {
+    border: 1px solid #475569;
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+}
+
+.quick-add-panel .btn {
+    width: fit-content;
+}
+
+.quick-checklist-container {
+    list-style: none;
+    margin: 8px 0;
+    padding: 0;
+    display: grid;
+    gap: 8px;
+}
+
+.quick-check-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 8px;
+    align-items: center;
+}
+
+.quick-check-row input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    accent-color: var(--accent);
+}
+
+.quick-check-remove {
+    border: 1px solid #475569;
+    background: #1e293b;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
 label {
     display: block;
     margin-bottom: 6px;
@@ -427,6 +503,34 @@ button:focus {
     color: #93c5fd;
 }
 
+.task-checklist {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 4px;
+}
+
+.task-checklist label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+}
+
+.task-checklist input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    accent-color: #38bdf8;
+}
+
+.task-check-text.checked {
+    text-decoration: line-through;
+    opacity: 0.75;
+}
+
 .due-text {
     font-size: 0.84rem;
     color: #cbd5e1;
@@ -581,6 +685,10 @@ button:focus {
 
     .controls-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .org-grid {
+        grid-template-columns: 1fr;
     }
 
     .detail-grid {

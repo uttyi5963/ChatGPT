@@ -1,4 +1,5 @@
 const STORAGE_KEY = "taskDashboard.tasks.v1";
+const ORG_STORAGE_KEY = "taskDashboard.organization.v1";
 const SETTINGS_KEY = "taskDashboard.settings.v1";
 const ALERT_SENT_KEY = "taskDashboard.alerts.sent.v1";
 const ALERT_CHECK_INTERVAL_MS = 60 * 1000;
@@ -43,6 +44,10 @@ const STATUS_WEIGHT = {
 
 const state = {
     tasks: [],
+    organization: {
+        teams: [],
+        members: [],
+    },
     activeDetailTaskId: null,
     settings: {
         alertsEnabled: false,
@@ -59,6 +64,20 @@ const state = {
 };
 
 const elements = {
+    teamForm: document.getElementById("team-form"),
+    teamNameInput: document.getElementById("team-name-input"),
+    teamList: document.getElementById("team-list"),
+    memberForm: document.getElementById("member-form"),
+    memberNameInput: document.getElementById("member-name-input"),
+    memberTeamSelect: document.getElementById("member-team-select"),
+    memberList: document.getElementById("member-list"),
+    quickTaskForm: document.getElementById("quick-task-form"),
+    quickTaskTitle: document.getElementById("quick-task-title"),
+    quickTaskDueDate: document.getElementById("quick-task-due-date"),
+    quickTaskTeam: document.getElementById("quick-task-team"),
+    quickTaskMember: document.getElementById("quick-task-member"),
+    quickChecklistContainer: document.getElementById("quick-checklist-container"),
+    quickAddCheckItemButton: document.getElementById("quick-add-check-item-btn"),
     taskForm: document.getElementById("task-form"),
     taskId: document.getElementById("task-id"),
     taskTitle: document.getElementById("task-title"),
@@ -105,10 +124,13 @@ const elements = {
 
 function boot() {
     state.tasks = loadTasks();
+    state.organization = loadOrganization();
     state.settings = loadSettings();
     state.alertSentMap = loadAlertSentMap();
     renderTodayLabel();
     attachEventListeners();
+    renderOrganizationSection();
+    ensureQuickChecklistRows();
     syncAlertControls();
     scheduleAlertCheck();
     resetForm();
@@ -126,6 +148,9 @@ function loadTasks() {
             importance: isValidImportance(task.importance) ? task.importance : "b",
             detailNotes: Array.isArray(task.detailNotes) ? task.detailNotes : [],
             bossQuestions: Array.isArray(task.bossQuestions) ? task.bossQuestions : [],
+            checklist: normalizeChecklist(task.checklist),
+            teamId: typeof task.teamId === "string" ? task.teamId : "",
+            memberId: typeof task.memberId === "string" ? task.memberId : "",
         }));
     } catch (_error) {
         return [];
@@ -134,6 +159,43 @@ function loadTasks() {
 
 function saveTasks() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.tasks));
+}
+
+function loadOrganization() {
+    const defaults = {
+        teams: [],
+        members: [],
+    };
+    try {
+        const raw = localStorage.getItem(ORG_STORAGE_KEY);
+        if (!raw) return defaults;
+        const parsed = JSON.parse(raw);
+        const teams = Array.isArray(parsed?.teams) ? parsed.teams : [];
+        const members = Array.isArray(parsed?.members) ? parsed.members : [];
+        return {
+            teams: teams
+                .filter((team) => team && typeof team.id === "string" && typeof team.name === "string")
+                .map((team) => ({
+                    id: team.id,
+                    name: team.name,
+                    createdAt: team.createdAt || Date.now(),
+                })),
+            members: members
+                .filter((member) => member && typeof member.id === "string" && typeof member.name === "string")
+                .map((member) => ({
+                    id: member.id,
+                    name: member.name,
+                    teamId: typeof member.teamId === "string" ? member.teamId : "",
+                    createdAt: member.createdAt || Date.now(),
+                })),
+        };
+    } catch (_error) {
+        return defaults;
+    }
+}
+
+function saveOrganization() {
+    localStorage.setItem(ORG_STORAGE_KEY, JSON.stringify(state.organization));
 }
 
 function loadSettings() {
@@ -171,6 +233,17 @@ function saveAlertSentMap() {
 }
 
 function attachEventListeners() {
+    elements.teamForm.addEventListener("submit", handleTeamSubmit);
+    elements.memberForm.addEventListener("submit", handleMemberSubmit);
+    elements.teamList.addEventListener("click", handleTeamListClick);
+    elements.memberList.addEventListener("click", handleMemberListClick);
+    elements.quickTaskForm.addEventListener("submit", handleQuickTaskSubmit);
+    elements.quickAddCheckItemButton.addEventListener("click", () => addQuickChecklistRow());
+    elements.quickChecklistContainer.addEventListener("click", handleQuickChecklistClick);
+    elements.quickTaskTeam.addEventListener("change", () => {
+        renderQuickMemberSelect(elements.quickTaskTeam.value, "");
+    });
+
     elements.taskForm.addEventListener("submit", handleSubmitTask);
     elements.resetButton.addEventListener("click", resetForm);
 
@@ -225,6 +298,239 @@ function attachEventListeners() {
     elements.bossQuestionList.addEventListener("click", handleBossQuestionListClick);
 }
 
+function handleTeamSubmit(event) {
+    event.preventDefault();
+    const name = elements.teamNameInput.value.trim();
+    if (!name) {
+        elements.teamNameInput.focus();
+        return;
+    }
+    const duplicate = state.organization.teams.some((team) => team.name.toLowerCase() === name.toLowerCase());
+    if (duplicate) {
+        window.alert("同じチーム名がすでに存在します。");
+        return;
+    }
+    state.organization.teams.push({
+        id: generateId("team"),
+        name,
+        createdAt: Date.now(),
+    });
+    saveOrganization();
+    elements.teamNameInput.value = "";
+    renderOrganizationSection();
+    renderTaskList();
+}
+
+function handleMemberSubmit(event) {
+    event.preventDefault();
+    const name = elements.memberNameInput.value.trim();
+    const teamId = elements.memberTeamSelect.value;
+    if (!name) {
+        elements.memberNameInput.focus();
+        return;
+    }
+    if (!teamId) {
+        window.alert("先にチームを登録してください。");
+        return;
+    }
+    state.organization.members.push({
+        id: generateId("member"),
+        name,
+        teamId,
+        createdAt: Date.now(),
+    });
+    saveOrganization();
+    elements.memberNameInput.value = "";
+    renderOrganizationSection();
+    renderTaskList();
+}
+
+function handleTeamListClick(event) {
+    if (event.target.dataset.action !== "delete-team") return;
+    const teamId = event.target.dataset.teamId;
+    if (!teamId) return;
+
+    state.organization.teams = state.organization.teams.filter((team) => team.id !== teamId);
+    state.organization.members = state.organization.members.filter((member) => member.teamId !== teamId);
+    state.tasks = state.tasks.map((task) => ({
+        ...task,
+        teamId: task.teamId === teamId ? "" : task.teamId,
+        memberId: state.organization.members.some((member) => member.id === task.memberId) ? task.memberId : "",
+    }));
+    saveOrganization();
+    saveTasks();
+    renderOrganizationSection();
+    render();
+}
+
+function handleMemberListClick(event) {
+    if (event.target.dataset.action !== "delete-member") return;
+    const memberId = event.target.dataset.memberId;
+    if (!memberId) return;
+
+    state.organization.members = state.organization.members.filter((member) => member.id !== memberId);
+    state.tasks = state.tasks.map((task) => ({
+        ...task,
+        memberId: task.memberId === memberId ? "" : task.memberId,
+    }));
+    saveOrganization();
+    saveTasks();
+    renderOrganizationSection();
+    render();
+}
+
+function renderOrganizationSection() {
+    const teams = state.organization.teams.slice().sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    elements.teamList.innerHTML = teams.length
+        ? teams
+              .map(
+                  (team) => `
+            <li class="compact-item">
+                <span>${escapeHtml(team.name)}</span>
+                <button type="button" data-action="delete-team" data-team-id="${escapeHtml(team.id)}">削除</button>
+            </li>
+        `
+              )
+              .join("")
+        : '<li class="compact-item"><span>チームが未登録です</span></li>';
+
+    const members = state.organization.members.slice().sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    elements.memberList.innerHTML = members.length
+        ? members
+              .map((member) => {
+                  const teamName = getTeamName(member.teamId) || "未所属";
+                  return `
+                    <li class="compact-item">
+                        <span>${escapeHtml(member.name)} <span class="muted">(${escapeHtml(teamName)})</span></span>
+                        <button type="button" data-action="delete-member" data-member-id="${escapeHtml(member.id)}">削除</button>
+                    </li>
+                `;
+              })
+              .join("")
+        : '<li class="compact-item"><span>メンバーが未登録です</span></li>';
+
+    renderMemberTeamSelect();
+    renderQuickTeamSelect();
+    renderQuickMemberSelect(elements.quickTaskTeam.value, elements.quickTaskMember.value);
+}
+
+function renderMemberTeamSelect() {
+    const options = ['<option value="">チームを選択</option>'];
+    const teams = state.organization.teams.slice().sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    for (const team of teams) {
+        options.push(`<option value="${escapeHtml(team.id)}">${escapeHtml(team.name)}</option>`);
+    }
+    elements.memberTeamSelect.innerHTML = options.join("");
+}
+
+function renderQuickTeamSelect() {
+    const previous = elements.quickTaskTeam.value || "";
+    const options = ['<option value="">未指定</option>'];
+    const teams = state.organization.teams.slice().sort((a, b) => a.name.localeCompare(b.name, "ja"));
+    for (const team of teams) {
+        const selected = previous === team.id ? " selected" : "";
+        options.push(`<option value="${escapeHtml(team.id)}"${selected}>${escapeHtml(team.name)}</option>`);
+    }
+    elements.quickTaskTeam.innerHTML = options.join("");
+}
+
+function renderQuickMemberSelect(teamId, previousMemberId) {
+    const options = ['<option value="">未指定</option>'];
+    const members = state.organization.members
+        .filter((member) => !teamId || member.teamId === teamId)
+        .sort((a, b) => a.name.localeCompare(b.name, "ja"));
+
+    for (const member of members) {
+        const selected = previousMemberId === member.id ? " selected" : "";
+        options.push(`<option value="${escapeHtml(member.id)}"${selected}>${escapeHtml(member.name)}</option>`);
+    }
+    elements.quickTaskMember.innerHTML = options.join("");
+}
+
+function ensureQuickChecklistRows() {
+    if (elements.quickChecklistContainer.children.length > 0) return;
+    addQuickChecklistRow();
+}
+
+function addQuickChecklistRow(text = "", checked = false) {
+    const row = document.createElement("li");
+    row.className = "quick-check-row";
+    row.innerHTML = `
+        <input type="checkbox" class="quick-check-done" ${checked ? "checked" : ""}>
+        <input type="text" class="quick-check-text" maxlength="120" placeholder="チェック項目を入力" value="${escapeHtml(text)}">
+        <button type="button" class="quick-check-remove" data-action="remove-quick-row">削除</button>
+    `;
+    elements.quickChecklistContainer.appendChild(row);
+}
+
+function handleQuickChecklistClick(event) {
+    if (event.target.dataset.action !== "remove-quick-row") return;
+    const row = event.target.closest(".quick-check-row");
+    if (!row) return;
+    if (elements.quickChecklistContainer.children.length === 1) {
+        row.querySelector(".quick-check-text").value = "";
+        row.querySelector(".quick-check-done").checked = false;
+        return;
+    }
+    row.remove();
+}
+
+function handleQuickTaskSubmit(event) {
+    event.preventDefault();
+
+    const inputTitle = elements.quickTaskTitle.value.trim();
+    const checklist = getQuickChecklistDraftItems();
+    const title = inputTitle || checklist[0]?.text || "クイックタスク";
+
+    if (!title) {
+        elements.quickTaskTitle.focus();
+        return;
+    }
+
+    const now = Date.now();
+    const task = {
+        id: generateId("task"),
+        title,
+        description: "",
+        dueDate: elements.quickTaskDueDate.value || "",
+        priority: "medium",
+        status: "todo",
+        importance: "b",
+        category: "クイック追加",
+        teamId: elements.quickTaskTeam.value || "",
+        memberId: elements.quickTaskMember.value || "",
+        checklist,
+        detailNotes: [],
+        bossQuestions: [],
+        createdAt: now,
+        updatedAt: now,
+    };
+
+    state.tasks.push(task);
+    saveTasks();
+    resetQuickTaskForm();
+    render();
+}
+
+function getQuickChecklistDraftItems() {
+    const rows = Array.from(elements.quickChecklistContainer.querySelectorAll(".quick-check-row"));
+    return rows
+        .map((row) => ({
+            id: generateId("item"),
+            checked: Boolean(row.querySelector(".quick-check-done")?.checked),
+            text: row.querySelector(".quick-check-text")?.value.trim() || "",
+        }))
+        .filter((item) => item.text);
+}
+
+function resetQuickTaskForm() {
+    elements.quickTaskForm.reset();
+    elements.quickChecklistContainer.innerHTML = "";
+    addQuickChecklistRow();
+    renderQuickTeamSelect();
+    renderQuickMemberSelect("", "");
+}
+
 function handleSubmitTask(event) {
     event.preventDefault();
 
@@ -261,6 +567,9 @@ function handleSubmitTask(event) {
     } else {
         state.tasks.push({
             ...nextTask,
+            checklist: [],
+            teamId: "",
+            memberId: "",
             detailNotes: [],
             bossQuestions: [],
         });
@@ -296,7 +605,28 @@ function handleTaskListClick(event) {
 
     if (action === "detail") {
         openDetailModal(taskId);
+        return;
     }
+
+    if (action === "toggle-check-item") {
+        const checkId = event.target.dataset.checkId;
+        toggleChecklistItem(taskId, checkId, event.target.checked);
+    }
+}
+
+function toggleChecklistItem(taskId, checkId, checked) {
+    if (!checkId) return;
+    updateTaskById(taskId, (current) => ({
+        ...current,
+        checklist: normalizeChecklist(current.checklist).map((item) => {
+            if (item.id !== checkId) return item;
+            return {
+                ...item,
+                checked,
+            };
+        }),
+    }));
+    render();
 }
 
 function deleteTask(taskId) {
@@ -444,8 +774,12 @@ function getVisibleTasks() {
         const priorityMatch = state.filters.priority === "all" || task.priority === state.filters.priority;
         const importance = isValidImportance(task.importance) ? task.importance : "b";
         const importanceMatch = state.filters.importance === "all" || importance === state.filters.importance;
-
-        const searchable = `${task.title} ${task.description || ""} ${task.category || ""}`.toLowerCase();
+        const teamName = getTeamName(task.teamId);
+        const memberName = getMemberName(task.memberId);
+        const checklistText = normalizeChecklist(task.checklist)
+            .map((item) => item.text)
+            .join(" ");
+        const searchable = `${task.title} ${task.description || ""} ${task.category || ""} ${teamName} ${memberName} ${checklistText}`.toLowerCase();
         const searchMatch = !searchWord || searchable.includes(searchWord);
 
         return statusMatch && priorityMatch && importanceMatch && searchMatch;
@@ -541,6 +875,10 @@ function renderTaskItem(task) {
     const dueClass = dueInfo.kind !== "normal" ? ` ${dueInfo.kind}` : "";
     const categoryText = task.category ? `カテゴリ: ${escapeHtml(task.category)}` : "カテゴリなし";
     const importance = isValidImportance(task.importance) ? task.importance : "b";
+    const teamName = getTeamName(task.teamId);
+    const memberName = getMemberName(task.memberId);
+    const assignmentText = memberName || teamName ? `担当: ${memberName || "未指定"} / ${teamName || "未指定"}` : "";
+    const checklistHtml = renderTaskChecklist(task);
 
     return `
         <li class="task-item ${escapeHtml(task.status)}" data-id="${escapeHtml(task.id)}">
@@ -562,9 +900,33 @@ function renderTaskItem(task) {
                 </div>
             </div>
             ${task.description ? `<p class="task-description">${escapeHtml(task.description)}</p>` : ""}
+            ${assignmentText ? `<p class="task-sub-meta">${escapeHtml(assignmentText)}</p>` : ""}
+            ${checklistHtml}
             <p class="task-sub-meta">詳細メモ: ${(task.detailNotes || []).length}件 / 上司への質問: ${(task.bossQuestions || []).length}件</p>
             <p class="due-text${dueClass}">${escapeHtml(dueInfo.text)}</p>
         </li>
+    `;
+}
+
+function renderTaskChecklist(task) {
+    const checklist = normalizeChecklist(task.checklist);
+    if (checklist.length === 0) return "";
+
+    return `
+        <ul class="task-checklist">
+            ${checklist
+                .map(
+                    (item) => `
+                <li>
+                    <label>
+                        <input type="checkbox" data-action="toggle-check-item" data-check-id="${escapeHtml(item.id)}" ${item.checked ? "checked" : ""}>
+                        <span class="task-check-text ${item.checked ? "checked" : ""}">${escapeHtml(item.text)}</span>
+                    </label>
+                </li>
+            `
+                )
+                .join("")}
+        </ul>
     `;
 }
 
@@ -588,12 +950,17 @@ function renderDetailModal() {
     if (!task) return;
 
     const importance = isValidImportance(task.importance) ? task.importance : "b";
+    const teamName = getTeamName(task.teamId) || "未指定";
+    const memberName = getMemberName(task.memberId) || "未指定";
     elements.detailModalTitle.textContent = task.title;
     elements.detailModalSummary.textContent = [
         `ステータス: ${STATUS_LABELS[task.status] || task.status}`,
         `重要度: ${IMPORTANCE_LABELS[importance]}`,
         `優先度: ${PRIORITY_LABELS[task.priority] || task.priority}`,
         `カテゴリ: ${task.category || "カテゴリなし"}`,
+        `担当チーム: ${teamName}`,
+        `担当メンバー: ${memberName}`,
+        `チェック項目: ${normalizeChecklist(task.checklist).length}件`,
         `期限: ${task.dueDate || "指定なし"}`,
         "",
         `詳細: ${task.description || "詳細説明なし"}`,
@@ -887,8 +1254,32 @@ function getTodayLocalISO() {
     return new Date(now.getTime() - tzOffsetMs).toISOString().slice(0, 10);
 }
 
+function normalizeChecklist(checklist) {
+    if (!Array.isArray(checklist)) return [];
+    return checklist
+        .filter((item) => item && typeof item.text === "string")
+        .map((item) => ({
+            id: typeof item.id === "string" ? item.id : generateId("item"),
+            text: item.text.trim(),
+            checked: Boolean(item.checked),
+        }))
+        .filter((item) => item.text);
+}
+
 function isValidImportance(value) {
     return value === "s" || value === "a" || value === "b" || value === "c";
+}
+
+function getTeamName(teamId) {
+    if (!teamId) return "";
+    const team = state.organization.teams.find((item) => item.id === teamId);
+    return team ? team.name : "";
+}
+
+function getMemberName(memberId) {
+    if (!memberId) return "";
+    const member = state.organization.members.find((item) => item.id === memberId);
+    return member ? member.name : "";
 }
 
 function getActiveDetailTask() {
@@ -916,6 +1307,10 @@ function formatDateTime(timestamp) {
         hour: "2-digit",
         minute: "2-digit",
     }).format(new Date(timestamp));
+}
+
+function generateId(prefix) {
+    return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
 function escapeHtml(text) {

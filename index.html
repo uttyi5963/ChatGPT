@@ -16,6 +16,65 @@
             <p id="today-label" class="today-label"></p>
         </header>
 
+        <section class="panel org-panel">
+            <h2>チーム / メンバー登録</h2>
+            <div class="org-grid">
+                <section class="org-card">
+                    <h3>チーム登録</h3>
+                    <form id="team-form" class="stack">
+                        <input id="team-name-input" type="text" maxlength="40" placeholder="例: 営業部 / 開発チームA">
+                        <button type="submit" class="btn btn-primary">チームを追加</button>
+                    </form>
+                    <ul id="team-list" class="compact-list"></ul>
+                </section>
+
+                <section class="org-card">
+                    <h3>メンバー登録</h3>
+                    <form id="member-form" class="stack">
+                        <input id="member-name-input" type="text" maxlength="40" placeholder="例: 山田 太郎">
+                        <select id="member-team-select"></select>
+                        <button type="submit" class="btn btn-primary">メンバーを追加</button>
+                    </form>
+                    <ul id="member-list" class="compact-list"></ul>
+                </section>
+            </div>
+        </section>
+
+        <section class="panel quick-add-panel">
+            <h2>クイック追加（Google Keep風）</h2>
+            <form id="quick-task-form" class="stack">
+                <div class="row">
+                    <div>
+                        <label for="quick-task-title">タイトル（任意）</label>
+                        <input id="quick-task-title" type="text" maxlength="80" placeholder="例: 明日の会議準備">
+                    </div>
+                    <div>
+                        <label for="quick-task-due-date">期限</label>
+                        <input id="quick-task-due-date" type="date">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div>
+                        <label for="quick-task-team">担当チーム</label>
+                        <select id="quick-task-team"></select>
+                    </div>
+                    <div>
+                        <label for="quick-task-member">担当メンバー</label>
+                        <select id="quick-task-member"></select>
+                    </div>
+                </div>
+
+                <div>
+                    <label>チェックボックス項目</label>
+                    <ul id="quick-checklist-container" class="quick-checklist-container"></ul>
+                    <button id="quick-add-check-item-btn" type="button" class="btn btn-secondary">項目を追加</button>
+                </div>
+
+                <button type="submit" class="btn btn-primary">クイックタスクを追加</button>
+            </form>
+        </section>
+
         <main class="layout">
             <section class="panel form-panel">
                 <h2>タスク追加 / 編集</h2>
