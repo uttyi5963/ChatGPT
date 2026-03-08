@@ -2,10 +2,40 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data', 'candidates.json');
+const UPLOADS_DIR = path.join(__dirname, 'data', 'uploads');
+
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    if (!fs.existsSync(UPLOADS_DIR)) {
+      fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+    }
+    cb(null, UPLOADS_DIR);
+  },
+  filename: function(req, file, cb) {
+    const ext = path.extname(file.originalname);
+    const safeName = req.params.id + '_' + Date.now() + ext;
+    cb(null, safeName);
+  }
+});
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: function(req, file, cb) {
+    const allowed = ['.pdf', '.doc', '.docx'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) {
+      cb(null, true);
+    } else {
+      cb(new Error('許可されていないファイル形式です'));
+    }
+  }
+});
 
 // Middleware
 app.use(cors());
@@ -201,6 +231,48 @@ app.delete('/api/candidates/:id', (req, res) => {
   writeCandidates(candidates);
 
   res.json({ success: true, message: '候補者を削除しました' });
+});
+
+// POST /api/candidates/:id/resume — upload resume file
+app.post('/api/candidates/:id/resume', upload.single('resume'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'ファイルが選択されていません' });
+  }
+
+  const candidates = readCandidates();
+  const candidate = candidates.find(c => c.id === req.params.id);
+  if (!candidate) {
+    // Clean up uploaded file
+    fs.unlinkSync(req.file.path);
+    return res.status(404).json({ success: false, error: '候補者が見つかりません' });
+  }
+
+  candidate.resumeFile = req.file.filename;
+  candidate.resumeOriginal = req.file.originalname;
+  candidate.timeline.push({
+    date: new Date().toISOString(),
+    action: '履歴書アップロード',
+    note: req.file.originalname
+  });
+
+  writeCandidates(candidates);
+  res.json({ success: true, data: candidate });
+});
+
+// GET /api/candidates/:id/resume — download resume file
+app.get('/api/candidates/:id/resume', (req, res) => {
+  const candidates = readCandidates();
+  const candidate = candidates.find(c => c.id === req.params.id);
+  if (!candidate || !candidate.resumeFile) {
+    return res.status(404).json({ success: false, error: 'ファイルが見つかりません' });
+  }
+
+  const filePath = path.join(UPLOADS_DIR, candidate.resumeFile);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ success: false, error: 'ファイルが見つかりません' });
+  }
+
+  res.download(filePath, candidate.resumeOriginal);
 });
 
 // GET /api/stats — dashboard statistics
