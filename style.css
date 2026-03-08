@@ -4,468 +4,377 @@
     box-sizing: border-box;
 }
 
+:root {
+    color-scheme: dark;
+    --bg: #0f172a;
+    --panel: #111827;
+    --panel-light: #1f2937;
+    --text: #e5e7eb;
+    --muted: #94a3b8;
+    --border: #334155;
+    --primary: #38bdf8;
+    --danger: #fb7185;
+    --success: #34d399;
+}
+
 body {
-    font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
-    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
-    color: #fff;
+    font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif;
+    background: radial-gradient(circle at top left, #1e293b, var(--bg));
+    color: var(--text);
     min-height: 100vh;
-    overflow-x: hidden;
 }
 
 #app {
-    max-width: 1200px;
+    max-width: 1100px;
     margin: 0 auto;
-    padding: 20px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.hidden {
-    display: none !important;
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 16px;
 }
 
-/* ボタン */
-.btn {
-    padding: 12px 32px;
-    border: none;
-    border-radius: 8px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.btn:active {
-    transform: translateY(0);
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #e94560, #c23152);
-    color: #fff;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(135deg, #ff6b81, #e94560);
-}
-
-.btn-choice {
-    background: linear-gradient(135deg, #0f3460, #16213e);
-    color: #fff;
-    border: 2px solid #e94560;
-    margin: 8px;
-    padding: 10px 24px;
-    font-size: 16px;
-}
-
-.btn-choice:hover {
-    background: linear-gradient(135deg, #e94560, #c23152);
-}
-
-/* タイトル画面 */
-#title-screen {
-    text-align: center;
-    padding: 40px 20px;
-}
-
-#title-screen h1 {
-    font-size: 64px;
-    background: linear-gradient(135deg, #e94560, #ffd700, #e94560);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: shimmer 3s linear infinite;
-    margin-bottom: 10px;
-}
-
-@keyframes shimmer {
-    0% { background-position: 0% center; }
-    100% { background-position: 200% center; }
+h1 {
+    font-size: 36px;
 }
 
 .subtitle {
-    font-size: 20px;
-    color: #a0a0c0;
-    margin-bottom: 40px;
+    color: var(--muted);
+    margin-top: 6px;
 }
 
-.player-setup {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 16px;
-    padding: 30px;
-    max-width: 500px;
-    margin: 0 auto;
-    backdrop-filter: blur(10px);
+.header-actions input {
+    min-width: 280px;
 }
 
-.player-setup h2 {
-    margin-bottom: 20px;
-    font-size: 24px;
+.card {
+    background: linear-gradient(160deg, rgba(31, 41, 55, 0.9), rgba(17, 24, 39, 0.9));
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
 }
 
-.player-count {
-    margin-bottom: 20px;
-    font-size: 18px;
-}
-
-.player-count select {
-    padding: 8px 16px;
-    font-size: 18px;
-    border-radius: 8px;
-    border: 2px solid #e94560;
-    background: #16213e;
-    color: #fff;
-    cursor: pointer;
-    margin-left: 8px;
-}
-
-.player-name-input {
-    display: flex;
-    align-items: center;
-    margin: 10px 0;
-    gap: 10px;
-}
-
-.player-name-input .color-dot {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.player-name-input input {
-    flex: 1;
-    padding: 8px 12px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-}
-
-.player-name-input input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
-}
-
-#player-names {
-    margin-bottom: 20px;
-}
-
-/* ゲーム画面 */
-#game-screen {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-#game-header {
-    text-align: center;
-}
-
-#game-header h2 {
-    font-size: 22px;
-    margin-bottom: 10px;
-}
-
-#player-stats {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-.player-stat {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 12px 20px;
-    min-width: 180px;
-    backdrop-filter: blur(10px);
-    border: 2px solid transparent;
-    transition: all 0.3s;
-}
-
-.player-stat.active {
-    border-color: #ffd700;
-    box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
-}
-
-.player-stat .name {
-    font-weight: bold;
-    font-size: 16px;
-    margin-bottom: 4px;
-}
-
-.player-stat .money {
-    color: #ffd700;
-    font-size: 18px;
-    font-weight: bold;
-}
-
-.player-stat .job {
-    color: #a0a0c0;
-    font-size: 13px;
-}
-
-/* ボード */
-#board-container {
-    display: flex;
-    justify-content: center;
-    overflow: auto;
-    border-radius: 12px;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 10px;
-}
-
-#board-canvas {
-    border-radius: 8px;
-}
-
-/* コントロール */
-#game-controls {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-#event-log {
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 16px 24px;
-    min-width: 300px;
-    max-width: 500px;
-    min-height: 80px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    font-size: 16px;
-    line-height: 1.6;
-    backdrop-filter: blur(10px);
-}
-
-#dice-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 12px;
 }
 
-#dice {
-    width: 80px;
-    height: 80px;
-    background: #fff;
-    color: #1a1a2e;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    font-weight: bold;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    transition: transform 0.1s;
+.kpi {
+    grid-column: span 1;
 }
 
-#dice.rolling {
-    animation: diceRoll 0.1s infinite;
+.progress-card,
+.priority-card {
+    grid-column: span 2;
 }
 
-@keyframes diceRoll {
-    0% { transform: rotate(0deg) scale(1); }
-    25% { transform: rotate(10deg) scale(1.05); }
-    50% { transform: rotate(0deg) scale(1); }
-    75% { transform: rotate(-10deg) scale(1.05); }
-    100% { transform: rotate(0deg) scale(1); }
+.label {
+    font-size: 13px;
+    color: var(--muted);
 }
 
-/* モーダル */
-.modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
+.value {
+    font-size: 30px;
+    font-weight: 700;
+    margin-top: 8px;
+}
+
+.value.danger {
+    color: var(--danger);
+}
+
+.meta {
+    color: var(--muted);
+    margin-top: 8px;
+}
+
+.progress-wrap {
+    margin-top: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #0b1222;
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 0;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: linear-gradient(90deg, var(--primary), #22d3ee);
+    transition: width 0.2s ease;
+}
+
+.priority-breakdown {
+    margin-top: 10px;
     display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.priority-row {
+    display: grid;
+    grid-template-columns: 48px 1fr 36px;
     align-items: center;
-    justify-content: center;
-    z-index: 100;
+    gap: 8px;
+    font-size: 13px;
 }
 
-.modal-content {
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-    border-radius: 16px;
-    padding: 30px;
-    max-width: 500px;
-    width: 90%;
-    text-align: center;
-    border: 2px solid #e94560;
-    box-shadow: 0 0 30px rgba(233, 69, 96, 0.3);
+.priority-track {
+    width: 100%;
+    background: #0b1222;
+    height: 8px;
+    border-radius: 999px;
+    overflow: hidden;
 }
 
-.modal-content h3 {
-    font-size: 22px;
-    margin-bottom: 12px;
-    color: #ffd700;
+.priority-fill {
+    height: 100%;
+    border-radius: 999px;
 }
 
-.modal-content p {
-    margin-bottom: 20px;
-    line-height: 1.6;
+.priority-fill.high {
+    background: #fb7185;
 }
 
-/* 結果画面 */
-#result-screen {
-    text-align: center;
-    padding: 40px 20px;
+.priority-fill.medium {
+    background: #facc15;
 }
 
-#result-screen h1 {
-    font-size: 48px;
-    margin-bottom: 30px;
-    color: #ffd700;
+.priority-fill.low {
+    background: #4ade80;
 }
 
-#rankings {
-    max-width: 600px;
-    margin: 0 auto 30px;
+.form-card h2,
+.list-card h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
 }
 
-.rank-item {
+.grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+input,
+textarea,
+select {
+    border: 1px solid var(--border);
+    background: #0b1222;
+    color: var(--text);
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+textarea {
+    resize: vertical;
+}
+
+.form-actions {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+}
+
+.btn {
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 9px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.15s ease;
+    color: white;
+    background: #334155;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn.primary {
+    background: var(--primary);
+    color: #062231;
+    font-weight: 700;
+}
+
+.btn.ghost {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.btn.danger {
+    background: var(--danger);
+    color: #24050d;
+    font-weight: 700;
+}
+
+.btn.small {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.task-list {
+    margin-top: 12px;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.task-item {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    background: rgba(11, 18, 34, 0.8);
+}
+
+.task-title-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 16px 24px;
-    margin: 10px 0;
-    backdrop-filter: blur(10px);
+    gap: 8px;
 }
 
-.rank-item.first {
-    border: 2px solid #ffd700;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-    font-size: 20px;
-}
-
-.rank-number {
-    font-size: 24px;
-    font-weight: bold;
-    margin-right: 16px;
-}
-
-.rank-name {
-    flex: 1;
-    font-weight: bold;
-}
-
-.rank-money {
-    color: #ffd700;
-    font-weight: bold;
+.task-title {
     font-size: 18px;
 }
 
-/* レスポンシブ */
-@media (max-width: 768px) {
-    #app {
-        padding: 10px;
+.task-description {
+    margin-top: 6px;
+    color: #cbd5e1;
+}
+
+.task-meta {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.chips {
+    display: flex;
+    gap: 6px;
+}
+
+.chip {
+    font-size: 11px;
+    border-radius: 999px;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+}
+
+.chip.priority.high {
+    background: rgba(251, 113, 133, 0.2);
+    border-color: rgba(251, 113, 133, 0.6);
+}
+
+.chip.priority.medium {
+    background: rgba(250, 204, 21, 0.2);
+    border-color: rgba(250, 204, 21, 0.6);
+}
+
+.chip.priority.low {
+    background: rgba(74, 222, 128, 0.2);
+    border-color: rgba(74, 222, 128, 0.6);
+}
+
+.chip.status.todo {
+    background: rgba(148, 163, 184, 0.2);
+}
+
+.chip.status.in_progress {
+    background: rgba(56, 189, 248, 0.2);
+}
+
+.chip.status.completed {
+    background: rgba(52, 211, 153, 0.2);
+}
+
+.task-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.empty-state {
+    margin-top: 12px;
+    color: var(--muted);
+}
+
+.hidden {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .dashboard {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    #title-screen h1 {
-        font-size: 36px;
+    .kpi,
+    .progress-card,
+    .priority-card {
+        grid-column: span 1;
     }
 
-    .subtitle {
-        font-size: 16px;
-        margin-bottom: 24px;
-    }
-
-    .player-setup {
-        padding: 20px 16px;
-    }
-
-    #player-stats {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .player-stat {
-        min-width: 140px;
-        padding: 8px 14px;
-    }
-
-    #game-controls {
-        flex-direction: column;
-    }
-
-    #event-log {
-        min-width: auto;
-        width: 100%;
-        padding: 12px 16px;
-        font-size: 14px;
-        min-height: 60px;
-    }
-
-    #dice {
-        width: 64px;
-        height: 64px;
-        font-size: 32px;
-    }
-
-    .btn {
-        padding: 10px 24px;
-        font-size: 16px;
-    }
-
-    .btn-choice {
-        display: block;
-        width: 100%;
-        margin: 6px 0;
-        padding: 12px 16px;
-        font-size: 14px;
-        text-align: left;
-        line-height: 1.4;
-    }
-
-    .modal-content {
-        padding: 20px 16px;
-        width: 95%;
-    }
-
-    .modal-content h3 {
-        font-size: 18px;
-    }
-
-    .modal-content p {
-        font-size: 14px;
-    }
-
-    #board-container {
-        padding: 4px;
-    }
-
-    #game-header h2 {
-        font-size: 18px;
-    }
-
-    #result-screen h1 {
-        font-size: 32px;
-    }
-
-    .rank-item {
-        padding: 12px 16px;
+    .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-@media (max-width: 400px) {
-    #title-screen h1 {
-        font-size: 28px;
+@media (max-width: 640px) {
+    #app {
+        padding: 14px;
     }
 
-    .player-setup h2 {
-        font-size: 18px;
+    .app-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .header-actions input {
+        min-width: auto;
+        width: 100%;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .task-item {
+        flex-direction: column;
     }
 }

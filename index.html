@@ -3,65 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>人生ゲーム</title>
+    <title>ダッシュボード付タスク管理アプリ</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="app">
-        <!-- タイトル画面 -->
-        <div id="title-screen">
-            <h1>人生ゲーム</h1>
-            <p class="subtitle">〜 The Game of Life 〜</p>
-            <div class="player-setup">
-                <h2>プレイヤー設定</h2>
-                <div class="player-count">
-                    <label>プレイヤー人数：</label>
-                    <select id="player-count">
-                        <option value="2">2人</option>
-                        <option value="3">3人</option>
-                        <option value="4">4人</option>
+        <header class="app-header">
+            <div>
+                <h1>TaskBoard</h1>
+                <p class="subtitle">ダッシュボード付タスク管理アプリ</p>
+            </div>
+            <div class="header-actions">
+                <input id="search-input" type="search" placeholder="タスクを検索（タイトル・説明）">
+            </div>
+        </header>
+
+        <section class="dashboard">
+            <article class="card kpi">
+                <p class="label">総タスク数</p>
+                <p id="kpi-total" class="value">0</p>
+            </article>
+            <article class="card kpi">
+                <p class="label">進行中</p>
+                <p id="kpi-in-progress" class="value">0</p>
+            </article>
+            <article class="card kpi">
+                <p class="label">完了</p>
+                <p id="kpi-completed" class="value">0</p>
+            </article>
+            <article class="card kpi">
+                <p class="label">期限切れ</p>
+                <p id="kpi-overdue" class="value danger">0</p>
+            </article>
+            <article class="card progress-card">
+                <p class="label">達成率</p>
+                <div class="progress-wrap">
+                    <div id="completion-bar" class="progress-bar"></div>
+                </div>
+                <p id="completion-text" class="meta">0%</p>
+            </article>
+            <article class="card priority-card">
+                <p class="label">優先度の内訳</p>
+                <div id="priority-breakdown" class="priority-breakdown"></div>
+            </article>
+        </section>
+
+        <section class="card form-card">
+            <h2>タスクを追加</h2>
+            <form id="task-form">
+                <div class="grid">
+                    <label>
+                        タイトル
+                        <input id="task-title" type="text" maxlength="80" required>
+                    </label>
+                    <label>
+                        優先度
+                        <select id="task-priority">
+                            <option value="high">高</option>
+                            <option value="medium" selected>中</option>
+                            <option value="low">低</option>
+                        </select>
+                    </label>
+                    <label>
+                        期限
+                        <input id="task-due-date" type="date">
+                    </label>
+                    <label>
+                        状態
+                        <select id="task-status">
+                            <option value="todo" selected>未着手</option>
+                            <option value="in_progress">進行中</option>
+                            <option value="completed">完了</option>
+                        </select>
+                    </label>
+                </div>
+                <label>
+                    説明
+                    <textarea id="task-description" rows="3" maxlength="240" placeholder="メモや補足を入力"></textarea>
+                </label>
+                <div class="form-actions">
+                    <button type="submit" class="btn primary">追加</button>
+                    <button id="form-reset-btn" type="button" class="btn ghost">リセット</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card list-card">
+            <div class="list-header">
+                <h2>タスク一覧</h2>
+                <div class="filters">
+                    <select id="filter-status">
+                        <option value="all">状態: すべて</option>
+                        <option value="todo">状態: 未着手</option>
+                        <option value="in_progress">状態: 進行中</option>
+                        <option value="completed">状態: 完了</option>
+                    </select>
+                    <select id="filter-priority">
+                        <option value="all">優先度: すべて</option>
+                        <option value="high">優先度: 高</option>
+                        <option value="medium">優先度: 中</option>
+                        <option value="low">優先度: 低</option>
+                    </select>
+                    <select id="sort-by">
+                        <option value="created_desc">新しい順</option>
+                        <option value="due_asc">期限が近い順</option>
+                        <option value="priority_desc">優先度が高い順</option>
                     </select>
                 </div>
-                <div id="player-names"></div>
-                <button id="start-btn" class="btn btn-primary">ゲーム開始</button>
             </div>
-        </div>
-
-        <!-- ゲーム画面 -->
-        <div id="game-screen" class="hidden">
-            <div id="game-header">
-                <h2 id="turn-info"></h2>
-                <div id="player-stats"></div>
-            </div>
-            <div id="board-container">
-                <canvas id="board-canvas"></canvas>
-            </div>
-            <div id="game-controls">
-                <div id="event-log">
-                    <p>サイコロを回してスタート！</p>
-                </div>
-                <div id="dice-area">
-                    <div id="dice">?</div>
-                    <button id="roll-btn" class="btn btn-primary">サイコロを回す</button>
-                </div>
-            </div>
-            <!-- 選択肢モーダル -->
-            <div id="choice-modal" class="modal hidden">
-                <div class="modal-content">
-                    <h3 id="choice-title"></h3>
-                    <p id="choice-description"></p>
-                    <div id="choice-buttons"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 結果画面 -->
-        <div id="result-screen" class="hidden">
-            <h1>ゲーム終了！</h1>
-            <div id="rankings"></div>
-            <button id="restart-btn" class="btn btn-primary">もう一度遊ぶ</button>
-        </div>
+            <ul id="task-list" class="task-list"></ul>
+            <p id="empty-state" class="empty-state">タスクがありません。新しいタスクを追加してください。</p>
+        </section>
     </div>
+
+    <template id="task-item-template">
+        <li class="task-item">
+            <div class="task-main">
+                <div class="task-title-row">
+                    <h3 class="task-title"></h3>
+                    <div class="chips">
+                        <span class="chip priority"></span>
+                        <span class="chip status"></span>
+                    </div>
+                </div>
+                <p class="task-description"></p>
+                <p class="task-meta"></p>
+            </div>
+            <div class="task-actions">
+                <button class="btn small toggle-btn">状態変更</button>
+                <button class="btn small ghost edit-btn">編集</button>
+                <button class="btn small danger delete-btn">削除</button>
+            </div>
+        </li>
+    </template>
+
     <script src="game.js"></script>
 </body>
 </html>
