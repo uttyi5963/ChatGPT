@@ -432,6 +432,58 @@
     .ai-flag-title{font-size:13px;font-weight:600;margin-bottom:2px;}
     .ai-flag-detail{font-size:12px;color:#666;}
 
+    /* ═══ REPORTS PAGE ═══ */
+    .kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+    @media(max-width:900px){.kpi-strip{grid-template-columns:repeat(2,1fr);}}
+    @media(max-width:600px){.kpi-strip{grid-template-columns:1fr;}}
+    .kpi-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;text-align:center;}
+    .kpi-num{font-family:'DM Mono',monospace;font-size:36px;font-weight:500;line-height:1;}
+    .kpi-lbl{font-size:11px;color:#999;margin-top:6px;letter-spacing:.5px;}
+    .kpi-sub{font-size:11px;color:#aaa;margin-top:4px;font-family:'DM Mono',monospace;}
+
+    .line-chart-wrap{position:relative;width:100%;overflow-x:auto;}
+    .line-chart-wrap svg{width:100%;min-width:500px;height:220px;display:block;}
+    .lc-axis{font-family:'DM Mono',monospace;font-size:10px;fill:#aaa;}
+    .lc-grid{stroke:var(--border);stroke-width:.5;}
+    .lc-line{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+    .lc-area{opacity:.12;}
+    .lc-dot{stroke:#fff;stroke-width:2;}
+
+    .funnel-wrap{display:flex;flex-direction:column;gap:10px;}
+    .funnel-row{display:flex;align-items:center;gap:10px;}
+    .funnel-stage{width:70px;font-size:11px;color:#666;text-align:right;flex-shrink:0;}
+    .funnel-bar-track{flex:1;height:22px;background:var(--cream);border-radius:4px;overflow:hidden;position:relative;}
+    .funnel-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;transition:width .6s ease;}
+    .funnel-pct{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:#fff;}
+    .funnel-count{font-family:'DM Mono',monospace;font-size:11px;color:#888;flex-shrink:0;width:36px;text-align:right;}
+
+    .heatmap-table{width:100%;border-collapse:separate;border-spacing:4px;}
+    .heatmap-table th{font-size:11px;font-weight:600;padding:8px 10px;text-align:center;color:#666;}
+    .heatmap-table th:first-child{text-align:right;}
+    .heatmap-table td{padding:0;text-align:center;}
+    .heatmap-cell{display:inline-flex;align-items:center;justify-content:center;width:100%;height:44px;border-radius:var(--radius);font-family:'DM Mono',monospace;font-size:18px;font-weight:600;transition:background .3s;}
+    .heatmap-total{font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--ink);padding:8px 10px;text-align:center;}
+
+    .decline-bar-wrap{display:flex;flex-direction:column;gap:10px;}
+    .decline-row{display:flex;align-items:center;gap:10px;}
+    .decline-stage{width:70px;font-size:11px;color:#666;text-align:right;flex-shrink:0;}
+    .decline-bar-track{flex:1;height:22px;background:var(--cream);border-radius:4px;overflow:hidden;}
+    .decline-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;transition:width .6s ease;background:var(--red);}
+    .decline-val{font-family:'DM Mono',monospace;font-size:10px;font-weight:600;color:#fff;}
+    .decline-count{font-family:'DM Mono',monospace;font-size:11px;color:#888;flex-shrink:0;width:50px;text-align:right;}
+
+    .report-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;}
+    .report-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#666;}
+    .report-legend-dot{width:10px;height:10px;border-radius:2px;}
+
+    .tth-bar-wrap{display:flex;flex-direction:column;gap:14px;}
+    .tth-row{display:flex;align-items:center;gap:12px;}
+    .tth-label{width:50px;font-size:13px;font-weight:600;color:#666;text-align:right;flex-shrink:0;}
+    .tth-bar-track{flex:1;height:28px;background:var(--cream);border-radius:6px;overflow:hidden;position:relative;}
+    .tth-bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;padding-left:10px;transition:width .6s ease;}
+    .tth-val{font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:#fff;}
+    .tth-days{font-family:'DM Mono',monospace;font-size:12px;color:#888;flex-shrink:0;width:60px;text-align:right;}
+
     /* PRINT */
     @media print{
       .header,.nav-btn,.btn,.filter-bar,.toast-container{display:none!important;}
@@ -456,6 +508,7 @@
     <button class="nav-btn" data-page="interview">面接評価</button>
     <button class="nav-btn" data-page="ai-resume">AI履歴書分析</button>
     <button class="nav-btn" data-page="ai-transcript">AI面接分析</button>
+    <button class="nav-btn" data-page="reports">レポート・分析</button>
   </nav>
   <div class="api-status">
     <span class="api-dot" id="api-dot"></span>
@@ -895,6 +948,54 @@
   </div>
 </div>
 
+<!-- ═══════════════════ REPORTS ═══════════════════ -->
+<div class="page" id="page-reports">
+  <div class="page-header">
+    <div class="page-title-block">
+      <h1 class="page-title">レポート・分析</h1>
+      <p class="page-sub">採用KPI・チャネル分析・パイプライン可視化</p>
+    </div>
+  </div>
+
+  <!-- KPI Summary -->
+  <div class="kpi-strip" id="report-kpi-strip">
+    <div class="kpi-card"><div class="kpi-num" id="rpt-kpi-conversion" style="color:var(--teal);">—</div><div class="kpi-lbl">コンバージョン率</div><div class="kpi-sub" id="rpt-kpi-conversion-sub"></div></div>
+    <div class="kpi-card"><div class="kpi-num" id="rpt-kpi-score" style="color:var(--gold);">—</div><div class="kpi-lbl">平均スコア</div><div class="kpi-sub" id="rpt-kpi-score-sub"></div></div>
+    <div class="kpi-card"><div class="kpi-num" id="rpt-kpi-days" style="color:var(--red);">—</div><div class="kpi-lbl">平均採用日数</div><div class="kpi-sub" id="rpt-kpi-days-sub"></div></div>
+    <div class="kpi-card"><div class="kpi-num" id="rpt-kpi-active" style="color:var(--green);">—</div><div class="kpi-lbl">アクティブ候補者</div><div class="kpi-sub" id="rpt-kpi-active-sub"></div></div>
+  </div>
+
+  <!-- Conversion + Decline -->
+  <div class="dash-grid">
+    <div class="card">
+      <div class="card-title">採用チャネル別コンバージョン <span class="tag">FUNNEL</span></div>
+      <div id="report-conversion"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">辞退率分析 <span class="tag">ANALYSIS</span></div>
+      <div id="report-decline"></div>
+    </div>
+  </div>
+
+  <!-- Monthly Trends -->
+  <div class="card" style="margin-bottom:20px;">
+    <div class="card-title">月別応募推移 <span class="tag">TREND</span></div>
+    <div id="report-monthly" class="line-chart-wrap"></div>
+  </div>
+
+  <!-- Time-to-hire + Cross Analysis -->
+  <div class="dash-grid">
+    <div class="card">
+      <div class="card-title">平均採用期間（職種別） <span class="tag">DAYS</span></div>
+      <div id="report-tth"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">職種 × 経路 クロス分析 <span class="tag">MATRIX</span></div>
+      <div id="report-cross"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════ CANDIDATE DETAIL MODAL ═══════════════════ -->
 <div class="overlay" id="candidate-modal">
   <div class="modal">
@@ -1075,6 +1176,7 @@ function showPage(pageId) {
   if (pageId === 'questions') renderQuestions('doctor');
   if (pageId === 'interview') refreshInterviewSelect();
   if (pageId === 'ai-resume' || pageId === 'ai-transcript') refreshAiCandidateSelects();
+  if (pageId === 'reports') refreshReports();
 }
 
 document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -2199,6 +2301,320 @@ function exportCSV() {
   a.click();
   URL.revokeObjectURL(url);
   showToast('CSVファイルをダウンロードしました。', 'success');
+}
+
+/* ═══════════════════ REPORTS ═══════════════════ */
+
+const STAGE_ORDER = ['scheduled','interviewed','offer','negotiating','accepted','joined'];
+const STAGE_LABELS = {scheduled:'面接予定',interviewed:'面接済',offer:'内定提示',negotiating:'交渉中',accepted:'内定承諾',joined:'入職済'};
+const SOURCE_COLORS = {agency:'var(--orange)',web:'var(--teal)',referral:'var(--green)'};
+const JOB_COLORS = {doctor:'var(--red)',nurse:'var(--teal)',clerk:'var(--gold)'};
+
+function stageIndex(status) {
+  var idx = STAGE_ORDER.indexOf(status);
+  if (status === 'waiting') idx = STAGE_ORDER.indexOf('negotiating');
+  if (idx < 0) idx = 0;
+  return idx;
+}
+
+async function refreshReports() {
+  await syncFromServer();
+  renderReportKPI();
+  renderConversionChart();
+  renderDeclineAnalysis();
+  renderMonthlyTrends();
+  renderTimeToHire();
+  renderCrossAnalysis();
+}
+
+function renderReportKPI() {
+  var total = candidates.length;
+  var joined = candidates.filter(function(c){return c.status==='joined';}).length;
+  var declined = candidates.filter(function(c){return c.status==='declined';}).length;
+  var active = total - joined - declined;
+  var scored = candidates.filter(function(c){return c.totalScore !== null && c.totalScore !== undefined;});
+  var avgScore = scored.length ? (scored.reduce(function(s,c){return s+c.totalScore;},0)/scored.length) : 0;
+
+  // Average days to hire
+  var daysArr = [];
+  candidates.filter(function(c){return c.status==='joined';}).forEach(function(c){
+    var start = new Date(c.createdAt);
+    var end = null;
+    (c.timeline||[]).forEach(function(t){
+      if(t.action && (t.action.indexOf('入職')>=0 || t.action.indexOf('joined')>=0)) end = new Date(t.date);
+    });
+    if(!end) end = new Date();
+    var days = Math.round((end - start)/(1000*60*60*24));
+    if(days >= 0) daysArr.push(days);
+  });
+  var avgDays = daysArr.length ? Math.round(daysArr.reduce(function(s,d){return s+d;},0)/daysArr.length) : 0;
+
+  var convRate = total > 0 ? (joined/total*100).toFixed(1) : '0.0';
+  document.getElementById('rpt-kpi-conversion').textContent = convRate + '%';
+  document.getElementById('rpt-kpi-conversion-sub').textContent = joined + ' / ' + total + '名';
+  document.getElementById('rpt-kpi-score').textContent = avgScore ? avgScore.toFixed(1) : '—';
+  document.getElementById('rpt-kpi-score-sub').textContent = scored.length + '名評価済';
+  document.getElementById('rpt-kpi-days').textContent = daysArr.length ? avgDays + '日' : '—';
+  document.getElementById('rpt-kpi-days-sub').textContent = daysArr.length ? daysArr.length + '名実績' : 'データなし';
+  document.getElementById('rpt-kpi-active').textContent = active;
+  document.getElementById('rpt-kpi-active-sub').textContent = '辞退 ' + declined + '名';
+}
+
+function renderConversionChart() {
+  var el = document.getElementById('report-conversion');
+  if(!candidates.length){ el.innerHTML='<div class="empty-state">データがありません</div>'; return; }
+
+  var sources = ['agency','web','referral'];
+  var data = {};
+  sources.forEach(function(src){
+    data[src] = {};
+    STAGE_ORDER.forEach(function(st){ data[src][st] = 0; });
+  });
+
+  candidates.forEach(function(c){
+    if(c.status === 'declined') return;
+    var src = c.source || 'agency';
+    if(!data[src]) return;
+    var reached = stageIndex(c.status);
+    for(var i=0; i<=reached; i++){
+      data[src][STAGE_ORDER[i]]++;
+    }
+  });
+
+  var html = '<div class="funnel-wrap">';
+  STAGE_ORDER.forEach(function(stage){
+    var maxVal = Math.max(1, Math.max(data.agency[stage]||0, data.web[stage]||0, data.referral[stage]||0));
+    var totalForStage = (data.agency[stage]||0) + (data.web[stage]||0) + (data.referral[stage]||0);
+    html += '<div style="margin-bottom:6px;"><div style="font-size:11px;color:#666;margin-bottom:4px;font-weight:600;">'+STAGE_LABELS[stage]+' <span style="color:#aaa;font-weight:400;">('+totalForStage+')</span></div>';
+    sources.forEach(function(src){
+      var val = data[src][stage] || 0;
+      var pct = totalForStage > 0 ? (val / Math.max.apply(null, sources.map(function(s){ return data[s][STAGE_ORDER[0]]||1; })) * 100) : 0;
+      html += '<div class="funnel-row">' +
+        '<div class="funnel-stage">'+SOURCE_LABELS[src]+'</div>' +
+        '<div class="funnel-bar-track"><div class="funnel-bar-fill" style="width:'+Math.max(pct,2)+'%;background:'+SOURCE_COLORS[src]+';"><span class="funnel-pct">'+(val>0?val:'')+'</span></div></div>' +
+      '</div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  html += '<div class="report-legend">';
+  sources.forEach(function(src){
+    html += '<div class="report-legend-item"><div class="report-legend-dot" style="background:'+SOURCE_COLORS[src]+';"></div>'+SOURCE_LABELS[src]+'</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderDeclineAnalysis() {
+  var el = document.getElementById('report-decline');
+  var declined = candidates.filter(function(c){return c.status==='declined';});
+  if(!declined.length){ el.innerHTML='<div class="empty-state">辞退者データがありません</div>'; return; }
+
+  var total = candidates.length;
+  var rate = (declined.length / total * 100).toFixed(1);
+
+  // Find which stage they were at before declining
+  var byStage = {};
+  STAGE_ORDER.forEach(function(st){ byStage[st] = 0; });
+
+  declined.forEach(function(c){
+    var lastStatus = 'scheduled';
+    (c.timeline||[]).forEach(function(t){
+      if(!t.action) return;
+      STAGE_ORDER.forEach(function(st){
+        if(t.action.indexOf(STATUS_LABELS[st])>=0 && st !== 'joined') lastStatus = st;
+      });
+      if(t.action.indexOf('辞退')>=0 || t.action.indexOf('declined')>=0) return;
+    });
+    byStage[lastStatus] = (byStage[lastStatus]||0) + 1;
+  });
+
+  var maxVal = Math.max.apply(null, STAGE_ORDER.map(function(st){return byStage[st]||0;})) || 1;
+
+  var html = '<div style="text-align:center;margin-bottom:16px;"><span style="font-family:\'DM Mono\',monospace;font-size:32px;font-weight:600;color:var(--red);">'+rate+'%</span><div style="font-size:11px;color:#999;margin-top:2px;">全体辞退率（'+declined.length+' / '+total+'名）</div></div>';
+  html += '<div class="decline-bar-wrap">';
+  STAGE_ORDER.filter(function(st){return st!=='joined';}).forEach(function(stage){
+    var val = byStage[stage]||0;
+    var pct = val/maxVal*100;
+    var stagePct = declined.length > 0 ? (val/declined.length*100).toFixed(0) : 0;
+    html += '<div class="decline-row">' +
+      '<div class="decline-stage">'+STAGE_LABELS[stage]+'</div>' +
+      '<div class="decline-bar-track"><div class="decline-bar-fill" style="width:'+Math.max(pct,val>0?4:0)+'%;"><span class="decline-val">'+(val>0?val+'名':'')+'</span></div></div>' +
+      '<div class="decline-count">'+(val>0?stagePct+'%':'')+'</div>' +
+    '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function renderMonthlyTrends() {
+  var el = document.getElementById('report-monthly');
+  if(!candidates.length){ el.innerHTML='<div class="empty-state">データがありません</div>'; return; }
+
+  // Build monthly buckets for last 12 months
+  var now = new Date();
+  var months = [];
+  for(var i=11; i>=0; i--){
+    var d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({
+      key: d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),
+      label: (d.getMonth()+1)+'月',
+      year: d.getFullYear(),
+      count: 0
+    });
+  }
+
+  candidates.forEach(function(c){
+    if(!c.createdAt) return;
+    var cd = new Date(c.createdAt);
+    var key = cd.getFullYear()+'-'+String(cd.getMonth()+1).padStart(2,'0');
+    months.forEach(function(m){ if(m.key===key) m.count++; });
+  });
+
+  var maxCount = Math.max.apply(null, months.map(function(m){return m.count;})) || 1;
+
+  // SVG dimensions
+  var W=800, H=200, padL=45, padR=20, padT=20, padB=35;
+  var chartW = W-padL-padR, chartH = H-padT-padB;
+
+  var svg = '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">';
+
+  // Grid lines
+  var gridSteps = 4;
+  for(var g=0; g<=gridSteps; g++){
+    var gy = padT + (chartH/gridSteps)*g;
+    var gVal = Math.round(maxCount - (maxCount/gridSteps)*g);
+    svg += '<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" class="lc-grid"/>';
+    svg += '<text x="'+(padL-8)+'" y="'+(gy+4)+'" class="lc-axis" text-anchor="end">'+gVal+'</text>';
+  }
+
+  // Points and path
+  var points = [];
+  months.forEach(function(m,idx){
+    var x = padL + (chartW/(months.length-1||1))*idx;
+    var y = padT + chartH - (m.count/maxCount)*chartH;
+    points.push({x:x, y:y, count:m.count, label:m.label});
+  });
+
+  // Area fill
+  if(points.length > 1){
+    var areaPath = 'M'+points[0].x+','+points[0].y;
+    for(var p=1;p<points.length;p++) areaPath+=' L'+points[p].x+','+points[p].y;
+    areaPath += ' L'+points[points.length-1].x+','+(padT+chartH)+' L'+points[0].x+','+(padT+chartH)+' Z';
+    svg += '<path d="'+areaPath+'" fill="var(--teal)" class="lc-area"/>';
+
+    // Line
+    var linePath = 'M'+points[0].x+','+points[0].y;
+    for(var q=1;q<points.length;q++) linePath+=' L'+points[q].x+','+points[q].y;
+    svg += '<path d="'+linePath+'" stroke="var(--teal)" class="lc-line"/>';
+  }
+
+  // Dots and labels
+  points.forEach(function(pt){
+    svg += '<circle cx="'+pt.x+'" cy="'+pt.y+'" r="4" fill="var(--teal)" class="lc-dot"/>';
+    if(pt.count > 0) svg += '<text x="'+pt.x+'" y="'+(pt.y-10)+'" class="lc-axis" text-anchor="middle" style="font-weight:600;fill:var(--ink);">'+pt.count+'</text>';
+  });
+
+  // X axis labels
+  points.forEach(function(pt,idx){
+    svg += '<text x="'+pt.x+'" y="'+(H-8)+'" class="lc-axis" text-anchor="middle">'+months[idx].label+'</text>';
+  });
+
+  svg += '</svg>';
+  el.innerHTML = svg;
+}
+
+function renderTimeToHire() {
+  var el = document.getElementById('report-tth');
+  var jobs = ['doctor','nurse','clerk'];
+  var results = {};
+
+  jobs.forEach(function(job){
+    var joined = candidates.filter(function(c){return c.job===job && c.status==='joined';});
+    var days = [];
+    joined.forEach(function(c){
+      var start = new Date(c.createdAt);
+      var end = null;
+      (c.timeline||[]).forEach(function(t){
+        if(t.action && (t.action.indexOf('入職')>=0 || t.action.indexOf('joined')>=0)) end = new Date(t.date);
+      });
+      if(!end) end = new Date();
+      var d = Math.round((end-start)/(1000*60*60*24));
+      if(d>=0) days.push(d);
+    });
+    results[job] = {avg: days.length ? Math.round(days.reduce(function(s,d){return s+d;},0)/days.length) : null, count: days.length};
+  });
+
+  var maxDays = Math.max.apply(null, jobs.map(function(j){return results[j].avg||0;})) || 1;
+
+  var html = '<div class="tth-bar-wrap">';
+  jobs.forEach(function(job){
+    var r = results[job];
+    var pct = r.avg !== null ? (r.avg/maxDays*100) : 0;
+    html += '<div class="tth-row">' +
+      '<div class="tth-label">'+JOB_LABELS[job]+'</div>' +
+      '<div class="tth-bar-track"><div class="tth-bar-fill" style="width:'+Math.max(pct,r.avg?8:0)+'%;background:'+JOB_COLORS[job]+';"><span class="tth-val">'+(r.avg!==null?r.avg+'日':'')+'</span></div></div>' +
+      '<div class="tth-days">'+(r.avg!==null?r.count+'名':'N/A')+'</div>' +
+    '</div>';
+  });
+  html += '</div>';
+  if(!jobs.some(function(j){return results[j].avg!==null;})){
+    html = '<div class="empty-state">入職済データがありません</div>';
+  }
+  el.innerHTML = html;
+}
+
+function renderCrossAnalysis() {
+  var el = document.getElementById('report-cross');
+  if(!candidates.length){ el.innerHTML='<div class="empty-state">データがありません</div>'; return; }
+
+  var jobs = ['doctor','nurse','clerk'];
+  var sources = ['agency','web','referral'];
+  var matrix = {};
+  var maxVal = 0;
+  jobs.forEach(function(j){
+    matrix[j] = {};
+    sources.forEach(function(s){ matrix[j][s] = 0; });
+  });
+  candidates.forEach(function(c){
+    var j = c.job || 'doctor';
+    var s = c.source || 'agency';
+    if(matrix[j] && matrix[j][s] !== undefined){
+      matrix[j][s]++;
+      if(matrix[j][s] > maxVal) maxVal = matrix[j][s];
+    }
+  });
+
+  var html = '<table class="heatmap-table"><thead><tr><th></th>';
+  sources.forEach(function(s){ html += '<th>'+SOURCE_LABELS[s]+'</th>'; });
+  html += '<th>合計</th></tr></thead><tbody>';
+
+  jobs.forEach(function(j){
+    var rowTotal = 0;
+    html += '<tr><th>'+JOB_LABELS[j]+'</th>';
+    sources.forEach(function(s){
+      var val = matrix[j][s];
+      rowTotal += val;
+      var opacity = maxVal > 0 ? Math.max(0.08, val/maxVal*0.8) : 0.08;
+      var textColor = val/maxVal > 0.4 ? '#fff' : 'var(--ink)';
+      html += '<td><div class="heatmap-cell" style="background:rgba(30,30,30,'+opacity+');color:'+textColor+';">'+(val||'0')+'</div></td>';
+    });
+    html += '<td class="heatmap-total">'+rowTotal+'</td></tr>';
+  });
+
+  // Column totals
+  html += '<tr><th style="font-size:10px;color:#aaa;">合計</th>';
+  var grandTotal = 0;
+  sources.forEach(function(s){
+    var colTotal = 0;
+    jobs.forEach(function(j){ colTotal += matrix[j][s]; });
+    grandTotal += colTotal;
+    html += '<td class="heatmap-total">'+colTotal+'</td>';
+  });
+  html += '<td class="heatmap-total" style="font-weight:700;">'+grandTotal+'</td></tr>';
+
+  html += '</tbody></table>';
+  el.innerHTML = html;
 }
 
 /* ═══════════════════ INIT ═══════════════════ */

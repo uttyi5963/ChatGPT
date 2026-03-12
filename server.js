@@ -328,6 +328,61 @@ app.get('/api/stats', (req, res) => {
   });
 });
 
+// GET /api/reports — report & analytics data
+app.get('/api/reports', (req, res) => {
+  const candidates = readCandidates();
+  const total = candidates.length;
+  const joined = candidates.filter(c => c.status === 'joined').length;
+  const declined = candidates.filter(c => c.status === 'declined').length;
+  const scored = candidates.filter(c => c.totalScore !== null && c.totalScore !== undefined);
+  const avgScore = scored.length ? +(scored.reduce((s, c) => s + c.totalScore, 0) / scored.length).toFixed(1) : null;
+
+  // Average days to hire
+  const daysArr = [];
+  candidates.filter(c => c.status === 'joined').forEach(c => {
+    const start = new Date(c.createdAt);
+    let end = null;
+    (c.timeline || []).forEach(t => {
+      if (t.action && (t.action.includes('入職') || t.action.includes('joined'))) end = new Date(t.date);
+    });
+    if (!end) end = new Date();
+    const days = Math.round((end - start) / (1000 * 60 * 60 * 24));
+    if (days >= 0) daysArr.push(days);
+  });
+  const avgDays = daysArr.length ? Math.round(daysArr.reduce((s, d) => s + d, 0) / daysArr.length) : null;
+
+  // Monthly trends (last 12 months)
+  const now = new Date();
+  const monthlyTrends = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const count = candidates.filter(c => {
+      if (!c.createdAt) return false;
+      const cd = new Date(c.createdAt);
+      return cd.getFullYear() === d.getFullYear() && cd.getMonth() === d.getMonth();
+    }).length;
+    monthlyTrends.push({ month: key, count });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      kpi: {
+        total,
+        joined,
+        declined,
+        active: total - joined - declined,
+        avgScore,
+        avgDays,
+        scoredCount: scored.length,
+        daysCount: daysArr.length
+      },
+      monthlyTrends
+    }
+  });
+});
+
 // ═══════════════════ AI ANALYSIS ENDPOINTS ═══════════════════
 
 // Ensure AI results directory exists
